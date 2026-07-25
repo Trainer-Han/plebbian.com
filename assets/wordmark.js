@@ -66,12 +66,97 @@
         return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     }
 
-    /* The overlays that draw the glass edge and the travelling glow are
-       pseudo-elements using content:attr(data-char), so the attribute has to
-       track the character. */
+    var SVGNS = 'http://www.w3.org/2000/svg';
+    var svgSeq = 0;
+
+    /* Distance from the top of the slot's content box down to the text
+       baseline. A zero-sized inline-block aligned to the baseline sits
+       exactly on it, so its offset reports the baseline directly — more
+       reliable than deriving it from line-height and font metrics. */
+    function baselineOf(slot) {
+        var strut = document.createElement('span');
+        strut.style.cssText = 'display:inline-block;width:0;height:0;vertical-align:baseline';
+        slot.appendChild(strut);
+        var y = strut.getBoundingClientRect().top - slot.getBoundingClientRect().top;
+        slot.removeChild(strut);
+        return y;
+    }
+
+    /* Draws one letter as: a white body with a genuine inner glow, plus a
+       dash running around the glyph's contour. Both are SVG because the
+       contour is the whole point — a CSS conic mask sweeps a wedge from the
+       centre and reads as a sonar sweep, not as light following the outline. */
+    function buildSVG(slot, ch) {
+        var old = slot.querySelector('.ai-svg');
+        if (old) old.remove();
+
+        var cs = getComputedStyle(slot);
+        var size = parseFloat(cs.fontSize);
+        var pad = size * 0.5;                 // room for the glow to spill
+        var box = slot.getBoundingClientRect();
+        var baseline = baselineOf(slot);
+        var w = box.width + pad * 2;
+        var h = box.height + pad * 2;
+        var uid = 'wm' + (++svgSeq);
+
+        var svg = document.createElementNS(SVGNS, 'svg');
+        svg.setAttribute('class', 'ai-svg');
+        svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+        svg.setAttribute('aria-hidden', 'true');
+        svg.style.cssText =
+            'left:' + (-pad) + 'px;top:' + (-pad) + 'px;width:' + w + 'px;height:' + h + 'px';
+
+        // Inner glow: invert the alpha, blur it, tint it, then composite the
+        // result back inside the glyph so the light sits within the edges.
+        svg.innerHTML =
+            '<defs><filter id="' + uid + '" x="-60%" y="-60%" width="220%" height="220%">' +
+                '<feComponentTransfer in="SourceAlpha" result="inv">' +
+                    '<feFuncA type="table" tableValues="1 0"/>' +
+                '</feComponentTransfer>' +
+                '<feGaussianBlur in="inv" stdDeviation="' + (size * 0.055).toFixed(2) + '" result="spread"/>' +
+                '<feFlood flood-color="#ff3fa4" result="tint"/>' +
+                '<feComposite in="tint" in2="spread" operator="in" result="glow"/>' +
+                '<feComposite in="glow" in2="SourceAlpha" operator="in" result="inner"/>' +
+                '<feMerge>' +
+                    '<feMergeNode in="SourceGraphic"/>' +
+                    '<feMergeNode in="inner"/>' +
+                '</feMerge>' +
+            '</filter></defs>';
+
+        function text(cls) {
+            var t = document.createElementNS(SVGNS, 'text');
+            t.setAttribute('class', cls);
+            t.setAttribute('x', String(pad));
+            t.setAttribute('y', String(pad + baseline));
+            t.setAttribute('font-family', cs.fontFamily);
+            t.setAttribute('font-size', cs.fontSize);
+            t.setAttribute('font-weight', cs.fontWeight);
+            t.textContent = ch;
+            return t;
+        }
+
+        var body = text('ai-body');
+        body.setAttribute('filter', 'url(#' + uid + ')');
+        svg.appendChild(body);
+
+        var snake = text('ai-snake');
+        // A short dash on a long gap: one light travelling the contour rather
+        // than a dotted outline. Lengths scale with the type size.
+        var dash = size * 0.55;
+        var gap = size * 4.2;
+        snake.setAttribute('stroke-width', (size * 0.045).toFixed(2));
+        snake.setAttribute('stroke-dasharray', dash.toFixed(1) + ' ' + gap.toFixed(1));
+        snake.style.setProperty('--snake-travel', (-(dash + gap)).toFixed(1));
+        svg.appendChild(snake);
+
+        slot.appendChild(svg);
+    }
+
+    /* Keeps the visible character and its SVG overlay in step. */
     function setChar(slot, ch) {
         slot.textContent = ch;
         slot.setAttribute('data-char', ch);
+        if (slot.classList.contains('lit')) buildSVG(slot, ch);
     }
 
     /* Natural advance width of one character in this slot. */
@@ -169,13 +254,17 @@
             [[ai1, W.A], [ai2, W.I]].forEach(function (pair, i) {
                 var g = pair[0];
                 g.classList.add('lit');
-                // Offset so the pink/gold drift reads as a wave through the
-                // pair rather than one flat blink.
-                g.style.animationDelay = (i * -0.9) + 's, ' + (i * -1.2) + 's';
                 g.style.transition = 'none';
                 g.style.width = pair[1] + 'px';
                 g.style.transform = 'translateX(' + (320 + i * 110) + 'px)';
                 g.style.opacity = '0';
+
+                // Built after the width is set, so the overlay is sized to the
+                // real slot. Offsetting the second letter's phase keeps the two
+                // snakes from running in lockstep.
+                buildSVG(g, g.textContent);
+                var snake = g.querySelector('.ai-snake');
+                if (snake) snake.style.animationDelay = (i * -1.1) + 's, ' + (i * -1.7) + 's';
 
                 at(30, function () {
                     g.style.transition =
@@ -226,15 +315,16 @@
 
             var DUR = 800;
 
-            // lift is negative for the glyph travelling right (it arcs over
-            // the top) and positive for the one travelling left, which makes
-            // the pair rotate clockwise. Each glyph also spins a full turn
-            // clockwise, ending upright.
+            // The pair orbits clockwise: the glyph travelling right arcs over
+            // the top, the one travelling left dips under. The letters stay
+            // upright throughout — they change places, they do not spin.
             function orbit(el, delta, lift) {
                 var frames = [
-                    { transform: 'translate(' + delta + 'px, 0) rotate(0deg)' },
-                    { transform: 'translate(' + (delta * 0.5) + 'px, ' + lift + 'em) rotate(180deg)' },
-                    { transform: 'translate(0px, 0) rotate(360deg)' }
+                    { transform: 'translate(' + delta + 'px, 0)' },
+                    { transform: 'translate(' + (delta * 0.75) + 'px, ' + (lift * 0.72) + 'em)' },
+                    { transform: 'translate(' + (delta * 0.5) + 'px, ' + lift + 'em)' },
+                    { transform: 'translate(' + (delta * 0.25) + 'px, ' + (lift * 0.72) + 'em)' },
+                    { transform: 'translate(0px, 0)' }
                 ];
                 if (!el.animate) {
                     el.style.transform = 'none';

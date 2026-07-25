@@ -1,0 +1,42 @@
+#!/bin/sh
+# Refuses any push that targets the live branch.
+#
+# live-website is what plebbian.com serves. It must only ever move by a pull
+# request that the repo owner merges. Server-side branch protection cannot
+# help here, because tooling acting through the owner's own credentials looks
+# exactly like the owner. This hook is the local stop.
+#
+# Enabled for this clone with:
+#     git config core.hooksPath scripts/hooks
+#
+# If you genuinely need to bypass it, that is what --no-verify is for — but
+# think about why the PR route is not good enough first.
+
+PROTECTED='refs/heads/live-website'
+blocked=0
+
+while read -r _local_ref _local_sha remote_ref _remote_sha; do
+    if [ "$remote_ref" = "$PROTECTED" ]; then
+        blocked=1
+    fi
+done
+
+if [ "$blocked" -eq 1 ]; then
+    cat >&2 <<'MSG'
+
+  Push rejected: live-website is the live site.
+
+  Nothing may be pushed to it directly, including fast-forwards from main.
+  Ship instead by opening a pull request and letting the owner merge it:
+
+      git push origin main
+      gh pr create --base live-website --head main --title "..." --body "..."
+
+  Opening the PR is fine. Merging it is the owner's decision, not the
+  tooling's.
+
+MSG
+    exit 1
+fi
+
+exit 0
