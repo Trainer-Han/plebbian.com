@@ -200,7 +200,14 @@
         clearPending();
         root.classList.remove('settled');
 
-        /* ---- measure the resting layout before touching anything ---- */
+        /* Switch to the animating layout BEFORE measuring. The settled rule
+           also matches `:not(.animating)`, so measuring first captured the
+           padding it adds — every "natural" width came back 0.16em too wide,
+           and the padding was then added a second time later. That is what
+           made the ending lurch. */
+        root.classList.add('animating');
+
+        /* ---- measure, now free of the settled padding ---- */
         var natural = glyphs.map(function (g) { return g.getBoundingClientRect().width; });
 
         var W = {
@@ -214,8 +221,6 @@
         // A single space collapses to nothing inside an inline-block, so the
         // "Pleb AI" gap comes from the font size instead of a measurement.
         var gap = parseFloat(getComputedStyle(root).fontSize) * 0.3;
-
-        root.classList.add('animating');
 
         // Explicit order on every slot. Flex sorts by order group, so if only
         // the two AI slots carried an order they would jump ahead of "n".
@@ -386,7 +391,10 @@
         });
 
         /* ---- the glass retires into the settled gradient ------------- */
-        at(5290, function () {
+        /* Waits for beat 6's width transition (4830ms + 0.58s) to finish.
+           Handing over while it was still in flight snapped it short and
+           shunted everything after the pair sideways by ~4.5px. */
+        at(5470, function () {
             // The settled rule adds padding-inline so background-clip:text has
             // room to paint the glyph's overhang, with a negative margin
             // cancelling it out. The explicit widths set above are border-box,
@@ -395,10 +403,16 @@
             // Width, padding and margin all change in this one frame, so the
             // glyph does not visibly move.
             var padAllow = parseFloat(getComputedStyle(root).fontSize) * 0.16;
-            ai1.style.transition = 'none';
-            ai2.style.transition = 'none';
-            ai1.style.width = (W.i + padAllow) + 'px';
-            ai2.style.width = (W.a + padAllow) + 'px';
+            // Read the width from the character each slot actually holds. The
+            // swap exchanges the slots' ORDER, not their contents, so after it
+            // ai1 holds "a" and ai2 holds "i" — assuming otherwise gave each
+            // letter the other's width and threw the ending 30px out.
+            // dataset.char is the reliable source: textContent also picks up
+            // the SVG overlay's own text nodes.
+            [ai1, ai2].forEach(function (g) {
+                g.style.transition = 'none';
+                g.style.width = (W[g.dataset.char] + padAllow) + 'px';
+            });
 
             root.classList.add('settled');
             [ai1, ai2].forEach(function (g) {
