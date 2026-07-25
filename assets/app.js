@@ -667,7 +667,7 @@
         items.push(
             { label: 'Toggle theme', action: function () { themeBtn && themeBtn.click(); }, icon: 'moon' },
             { label: 'GitHub profile', href: 'https://github.com/' + GH_USER, icon: 'github', external: true },
-            { label: 'Email us', href: 'mailto:hello@plebbian.com', icon: 'mail', external: true }
+            { label: 'Email me', href: 'mailto:hello@plebbian.com', icon: 'mail', external: true }
         );
 
         function render() {

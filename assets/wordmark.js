@@ -63,7 +63,7 @@
         root.classList.remove('animating');
         glyphs.forEach(function (g) {
             g.removeAttribute('style');
-            g.classList.remove('lit', 'swapping');
+            g.classList.remove('lit', 'filling', 'swapping');
         });
         ai1.textContent = 'i';
         ai2.textContent = 'a';
@@ -127,42 +127,48 @@
             g.style.transition = 'none';
             g.style.opacity = '0';
             g.style.transform = 'translateY(0.22em)';
-            at(40 + i * 70, function () {
-                g.style.transition = 'opacity 0.4s ease, transform 0.5s var(--ease)';
+            at(60 + i * 105, function () {
+                g.style.transition = 'opacity 0.5s ease, transform 0.6s var(--ease)';
                 g.style.opacity = '1';
                 g.style.transform = 'none';
             });
         });
 
-        /* ---- beat 2: "Pleb AI" — AI glides in from the right ---------- */
-        at(560, function () {
+        /* ---- beat 2: "Pleb AI" — AI drifts in from the right ---------- */
+        at(700, function () {
             slotSpace.style.width = spaceWidth + 'px';
 
             [ai1, ai2].forEach(function (g, i) {
                 g.classList.add('lit');
+                // Offset the two glyphs' pulse so the pink/gold drift reads as
+                // a wave moving through the pair rather than one flat blink.
+                g.style.animationDelay = (i * -0.9) + 's';
                 g.style.transition = 'none';
                 g.style.width = uniform + 'px';
-                // Off to the right, the far letter trailing slightly behind.
-                g.style.transform = 'translateX(' + (340 + i * 90) + 'px)';
+                // Off to the right, the far letter trailing behind.
+                g.style.transform = 'translateX(' + (330 + i * 110) + 'px)';
                 g.style.opacity = '0';
 
                 at(30, function () {
+                    // Long, decelerating glide — the "chill" part.
                     g.style.transition =
-                        'transform 0.78s var(--ease) ' + (i * 0.07) + 's, opacity 0.5s ease ' + (i * 0.07) + 's';
+                        'transform 1.05s cubic-bezier(0.16, 1, 0.3, 1) ' + (i * 0.1) + 's,' +
+                        'opacity 0.75s ease ' + (i * 0.1) + 's';
                     g.style.transform = 'none';
                     g.style.opacity = '1';
                 });
             });
         });
 
-        /* ---- beat 3: "PlebbAIn" — b and n float in ------------------- */
-        at(1480, function () {
+        /* ---- beat 3: "PlebbAIn" — b and n float in -------------------
+           Held a moment first so the outline glow gets to breathe alone. */
+        at(2050, function () {
             slotSpace.style.width = '0px';
             [[slotB, naturalB], [slotN, naturalN]].forEach(function (pair, i) {
                 var g = pair[0];
-                at(i * 120, function () {
+                at(i * 130, function () {
                     g.style.transition =
-                        'width 0.5s var(--ease), opacity 0.42s ease, transform 0.55s var(--ease)';
+                        'width 0.55s var(--ease), opacity 0.5s ease, transform 0.6s var(--ease)';
                     g.style.width = pair[1] + 'px';
                     g.style.opacity = '1';
                     g.style.transform = 'none';
@@ -171,11 +177,11 @@
         });
 
         /* ---- beat 4: "PlebbIAn" — the swap, on an arc ---------------- */
-        at(2180, function () {
+        at(2950, function () {
             // Both slots share `uniform` width, so the centre-to-centre
             // distance is symmetric and the exchange is exact.
             var d = ai2.getBoundingClientRect().left - ai1.getBoundingClientRect().left;
-            var dur = 620;
+            var dur = 760;
 
             function arc(el, dx, lift) {
                 if (!el.animate) {
@@ -187,7 +193,7 @@
                     { transform: 'translateX(0) translateY(0)' },
                     { transform: 'translateX(' + (dx / 2) + 'px) translateY(' + lift + 'em)' },
                     { transform: 'translateX(' + dx + 'px) translateY(0)' }
-                ], { duration: dur, easing: 'cubic-bezier(0.65, 0, 0.35, 1)', fill: 'forwards' });
+                ], { duration: dur, easing: 'cubic-bezier(0.5, 0, 0.5, 1)', fill: 'forwards' });
             }
 
             ai1.classList.add('swapping');
@@ -213,39 +219,48 @@
         });
 
         /* ---- beat 5: case cycles down to "Plebbian" ------------------ */
-        at(2900, function () {
+        at(3820, function () {
             var frames = [
                 ['i', 'a'], ['I', 'A'], ['i', 'a'], ['I', 'A'], ['i', 'a']
             ];
+            var step = 115;
+
             frames.forEach(function (pair, i) {
-                at(i * 88, function () {
+                at(i * step, function () {
                     ai1.textContent = pair[0];
                     ai2.textContent = pair[1];
+
+                    // Swap outline for the settled gradient on a flicker frame:
+                    // the character change covers the handover, so the fill-in
+                    // reads as intentional rather than as a pop.
+                    if (i === 2) {
+                        root.classList.add('settled');
+                        [ai1, ai2].forEach(function (g) {
+                            g.classList.add('filling');
+                            g.classList.remove('lit');
+                        });
+                    }
                 });
             });
 
-            // Glow retires into the permanent gradient tint, and the slots
-            // relax from the uniform box to their true widths.
-            at(frames.length * 88 + 60, function () {
-                ai1.classList.remove('lit');
-                ai2.classList.remove('lit');
-                root.classList.add('settled');
-                ai1.style.transition = 'width 0.45s var(--ease)';
-                ai2.style.transition = 'width 0.45s var(--ease)';
-                ai1.style.width = naturalAi1 + 'px';
-                ai2.style.width = naturalAi2 + 'px';
+            // Slots relax from the uniform box back to their true widths.
+            at(frames.length * step + 70, function () {
+                [[ai1, naturalAi1], [ai2, naturalAi2]].forEach(function (pair) {
+                    pair[0].style.transition = 'width 0.5s var(--ease)';
+                    pair[0].style.width = pair[1] + 'px';
+                });
             });
         });
 
         /* ---- beat 6: the domain stamp -------------------------------- */
-        at(3260, function () {
+        at(4380, function () {
             if (!domain) return;
             domain.classList.add('revealing');
             domain.classList.remove('pending');
         });
 
         /* ---- cleanup: hand layout back to normal text flow ----------- */
-        at(3820, function () {
+        at(4980, function () {
             settle();
             try { sessionStorage.setItem(SESSION_KEY, '1'); } catch (e) { /* private mode */ }
         });

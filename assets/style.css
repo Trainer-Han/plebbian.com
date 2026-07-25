@@ -84,6 +84,7 @@
     --shadow-lg: 0 26px 70px rgba(2, 6, 23, 0.62);
     --dot: rgba(148, 163, 184, 0.55);
     --grid-line: rgba(148, 163, 184, 0.06);
+    --ai-rest-glow: drop-shadow(0 0 12px rgba(236, 72, 153, 0.28));
 }
 
 :root[data-theme='light'] {
@@ -113,6 +114,8 @@
     --shadow-lg: 0 26px 70px rgba(15, 23, 42, 0.14);
     --dot: rgba(51, 65, 85, 0.5);
     --grid-line: rgba(15, 23, 42, 0.05);
+    /* A bloom behind dark text on a light page just reads as smudge. */
+    --ai-rest-glow: none;
 }
 
 /* --------------------------------------------------------------------------
@@ -748,10 +751,12 @@ kbd {
    so the static logo still carries the idea after the animation ends. */
 .wordmark.settled .g.ai,
 .wordmark:not(.animating) .g.ai {
-    background: linear-gradient(135deg, var(--blue), var(--violet) 55%, var(--pink));
+    background: linear-gradient(135deg, var(--violet), var(--pink) 60%, var(--amber));
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
+    /* A whisper of the bloom stays, so settling isn't an abrupt cut. */
+    filter: var(--ai-rest-glow, none);
 }
 
 /* While the sequence runs, glyphs are absolute-width flex slots so
@@ -762,26 +767,58 @@ kbd {
 }
 
 .wordmark.animating .g {
-    overflow: hidden;
-    transition: width 0.55s var(--ease), opacity 0.45s ease, transform 0.55s var(--ease);
+    transition: width 0.6s var(--ease), opacity 0.5s ease, transform 0.6s var(--ease);
 }
 
-.wordmark.animating .g.spacer { transition: width 0.5s var(--ease); }
+/* Only the slots that collapse to zero need clipping. Applying it to the AI
+   glyphs would chop their glow off square at the element box — which is why
+   the halo must be a filter, never a text-shadow on a clipped box. */
+.wordmark.animating .g.collapsible { overflow: hidden; }
 
-/* "AI" while it is still AI: a slow breathing bloom, not a hard neon. */
-.wordmark.animating .g.ai.lit {
-    -webkit-text-fill-color: currentColor;
-    color: #fff;
-    text-shadow:
-        0 0 14px color-mix(in srgb, var(--violet) 85%, transparent),
-        0 0 38px color-mix(in srgb, var(--blue) 65%, transparent),
-        0 0 76px color-mix(in srgb, var(--violet) 45%, transparent);
-    animation: aiBreathe 2.6s ease-in-out infinite;
+.wordmark.animating .g.spacer { transition: width 0.55s var(--ease); }
+
+/* --------------------------------------------------------------------------
+   "AI" while it is still AI: outlined letters in pink and gold, with the
+   stroke colour drifting between the two and a soft bloom breathing behind.
+
+   drop-shadow() samples the glyph's alpha, so the glow takes the shape of
+   the letters. box-shadow or a text-shadow inside an overflow-hidden box
+   would both give away the rectangle.
+   -------------------------------------------------------------------------- */
+.wordmark .g.ai.lit {
+    background: none;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    -webkit-text-stroke: 1.6px var(--pink);
+    animation: aiDrift 3.8s ease-in-out infinite;
+    /* Slow enough to read as breathing rather than blinking. */
+    transition: -webkit-text-stroke-width 0.6s ease, filter 0.6s ease;
 }
 
-@keyframes aiBreathe {
-    0%, 100% { opacity: 0.92; }
-    50%      { opacity: 1; }
+@keyframes aiDrift {
+    0%, 100% {
+        -webkit-text-stroke-color: #ec4899;
+        filter:
+            drop-shadow(0 0 5px color-mix(in srgb, var(--pink) 78%, transparent))
+            drop-shadow(0 0 17px color-mix(in srgb, var(--amber) 40%, transparent))
+            drop-shadow(0 0 38px color-mix(in srgb, var(--pink) 24%, transparent));
+    }
+    50% {
+        -webkit-text-stroke-color: #f59e0b;
+        filter:
+            drop-shadow(0 0 8px color-mix(in srgb, var(--amber) 82%, transparent))
+            drop-shadow(0 0 24px color-mix(in srgb, var(--pink) 46%, transparent))
+            drop-shadow(0 0 50px color-mix(in srgb, var(--amber) 26%, transparent));
+    }
+}
+
+/* The moment the outline fills in: stroke thins away to nothing while the
+   settled gradient takes over underneath, and the bloom retires. */
+.wordmark .g.ai.filling {
+    -webkit-text-stroke-width: 0;
+    animation: none;
+    filter: drop-shadow(0 0 14px color-mix(in srgb, var(--pink) 30%, transparent));
+    transition: -webkit-text-stroke-width 0.55s ease, filter 0.7s ease;
 }
 
 .wordmark .g.swapping {
