@@ -1,0 +1,8 @@
+# GitHub Pages (legacy/Jekyll build) configuration.
+#
+# Only reason this file exists: keep build tooling out of the published site.
+# Without it, https://plebbian.com/scripts/verify.js is served as a page.
+exclude:
+  - scripts
+  - .github
+  - README.md

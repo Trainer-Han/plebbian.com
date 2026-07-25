@@ -8,7 +8,10 @@ on:
   pull_request:
     branches: [live-website]
   push:
-    branches: [main]
+    # live-website is included so that if the protection is ever relaxed and
+    # something is pushed straight to it, there is still a CI record for the
+    # commit that actually went live.
+    branches: [main, live-website]
   workflow_dispatch:
 
 permissions:
