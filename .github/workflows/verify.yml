@@ -1,0 +1,61 @@
+name: verify
+
+# The live site is served from the live-website branch, so this is the gate
+# between a dev push and production. It runs on every PR into live-website
+# (where it is a required check) and on pushes to main, so breakage shows up
+# while you are still working rather than at merge time.
+on:
+  pull_request:
+    branches: [live-website]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Static checks: structure, dead references and anchors, missing icon
+      # symbols, emoji used as icons, WCAG contrast, landmarks.
+      - name: Pre-flight checks
+        run: node scripts/verify.js
+
+      # puppeteer-core drives the Chrome already on the runner, so there is
+      # no ~150MB browser download.
+      - name: Install puppeteer-core
+        run: npm install --no-save --no-fund --no-audit puppeteer-core
+
+      - name: Locate Chrome
+        id: chrome
+        run: |
+          for candidate in /usr/bin/google-chrome /usr/bin/chromium-browser /usr/bin/chromium; do
+            if [ -x "$candidate" ]; then
+              echo "path=$candidate" >> "$GITHUB_OUTPUT"
+              echo "Using $candidate"
+              exit 0
+            fi
+          done
+          echo "No Chrome on the runner image." >&2
+          exit 1
+
+      # Runtime checks: console errors, failed requests, uncaught exceptions,
+      # overflow, and the wordmark settling correctly in a real browser.
+      - name: Browser checks
+        env:
+          CHROME_PATH: ${{ steps.chrome.outputs.path }}
+        run: node scripts/browser-check.js
+
+      - name: Summary
+        if: success()
+        run: echo "All checks green — safe to merge into live-website." >> "$GITHUB_STEP_SUMMARY"

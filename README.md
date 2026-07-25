@@ -7,6 +7,66 @@ Static HTML with no build step, served by GitHub Pages on
 [plebbian.com](https://plebbian.com). The `CNAME` file wires the custom
 domain; DNS lives at the registrar.
 
+## How this ships
+
+**`main` is where work happens. `live-website` is what the public sees.**
+
+GitHub Pages is configured to build from `live-website` (root), *not* `main`.
+So pushing to `main` — or any other branch — cannot break the live site. It
+only goes live when `live-website` moves.
+
+```
+  main ──────●───●───●──────●         ← push freely, experiment, break things
+                          ╲
+                           PR + CI     ← required: no direct pushes
+                            ╲
+  live-website ──●───────────●        ← Pages builds this → plebbian.com
+```
+
+Rules on `live-website`:
+
+- **Direct pushes are blocked.** Everything arrives through a pull request.
+- **The `verify` check must pass** before the PR can merge.
+- **The branch must be up to date** with its base before merging.
+- No approving review is required, since this is a one-person repo — the
+  gate is CI, not a second pair of eyes.
+
+### Shipping a change
+
+```sh
+git switch main
+# ...work, commit...
+git push origin main                       # safe: does not touch the live site
+
+gh pr create --base live-website --head main \
+  --title "Ship: what changed" --body "..."
+# wait for `verify` to go green, then:
+gh pr merge --merge                        # Pages rebuilds, ~40s
+```
+
+### What CI checks
+
+`.github/workflows/verify.yml` runs two scripts, both runnable locally:
+
+```sh
+node scripts/verify.js          # static
+CHROME_PATH="/path/to/chrome" node scripts/browser-check.js   # runtime
+```
+
+| Script | Catches |
+| --- | --- |
+| `verify.js` | Malformed HTML, dead asset references, anchors pointing at ids that don't exist, `<use>` with no matching `<symbol>`, emoji used as icons, text tokens below WCAG AA 4.5:1, missing skip link or `#main`, more than one `<h1>` |
+| `browser-check.js` | Console errors, uncaught exceptions, failed requests, stylesheet not applying, horizontal overflow, controls with no accessible name, and the wordmark failing to settle on "Plebbian" or leaving inline styles behind |
+
+`browser-check.js` serves the repo over HTTP the way Pages does — including
+returning `404.html` for unknown paths — so the 404 page's root-absolute
+asset paths are actually exercised. It uses `puppeteer-core` against an
+already-installed Chrome, so there's no browser download.
+
+Requests to `api.github.com` are allowed to fail: the pages are built to
+degrade to a notice when the API is unreachable or rate-limited, and CI
+runners frequently are.
+
 ## Layout
 
 | Path | What it is |
