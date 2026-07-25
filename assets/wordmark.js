@@ -4,7 +4,7 @@
      Pleb
      Pleb AI
      PlebbAIn
-     PlebbIAn      the pair spins clockwise and swaps
+     PlebbIAn      the pair swaps places, travelling clockwise
      PlebbiAn      first letter lowercases
      Plebbian      second letter lowercases
      Plebbian      + the .com stamp
@@ -242,15 +242,15 @@
             g.style.transition = 'none';
             g.style.opacity = '0';
             g.style.transform = 'translateY(0.22em)';
-            at(60 + i * 100, function () {
-                g.style.transition = 'opacity 0.5s ease, transform 0.6s var(--ease)';
+            at(70 + i * 118, function () {
+                g.style.transition = 'opacity 0.62s ease, transform 0.72s var(--ease-soft)';
                 g.style.opacity = '1';
                 g.style.transform = 'none';
             });
         });
 
         /* ---- beat 2: "Pleb AI" — the pair drifts in from the right ---- */
-        at(640, function () {
+        at(720, function () {
             slotSpace.style.width = gap + 'px';
 
             [[ai1, W.A], [ai2, W.I]].forEach(function (pair, i) {
@@ -270,8 +270,8 @@
 
                 at(30, function () {
                     g.style.transition =
-                        'transform 1s cubic-bezier(0.16, 1, 0.3, 1) ' + (i * 0.1) + 's,' +
-                        'opacity 0.7s ease ' + (i * 0.1) + 's';
+                        'transform 1.24s cubic-bezier(0.33, 0, 0.2, 1) ' + (i * 0.12) + 's,' +
+                        'opacity 0.85s ease ' + (i * 0.12) + 's';
                     g.style.transform = 'none';
                     g.style.opacity = '1';
                 });
@@ -280,13 +280,15 @@
 
         /* ---- beat 3: "PlebbAIn" — b and n drop in --------------------
            Held first so the glass letters get a moment on their own. */
-        at(2050, function () {
+        at(2340, function () {
             slotSpace.style.width = '0px';
             [[slotB, W.b], [slotN, W.n]].forEach(function (pair, i) {
                 var g = pair[0];
-                at(i * 120, function () {
+                at(i * 150, function () {
+                    // Matched durations so the letter finishes arriving at the
+                    // same moment the space for it finishes opening.
                     g.style.transition =
-                        'width 0.5s var(--ease), opacity 0.5s ease, transform 0.6s var(--ease)';
+                        'width 0.66s var(--ease-soft), opacity 0.66s ease, transform 0.72s var(--ease-soft)';
                     g.style.width = pair[1] + 'px';
                     g.style.opacity = '1';
                     g.style.transform = 'none';
@@ -299,7 +301,7 @@
            read positions, reorder, then animate each glyph from where it used
            to be along a clockwise semicircle. Because flex recomputes the
            layout, the letters keep their own widths and land exactly. */
-        at(2900, function () {
+        at(3320, function () {
             var before1 = ai1.getBoundingClientRect().left;
             var before2 = ai2.getBoundingClientRect().left;
 
@@ -315,26 +317,38 @@
             ai1.style.transition = 'none';
             ai2.style.transition = 'none';
 
-            var DUR = 800;
+            var DUR = 940;
 
             // The pair orbits clockwise: the glyph travelling right arcs over
             // the top, the one travelling left dips under. The letters stay
             // upright throughout — they change places, they do not spin.
+            //
+            // The path is sampled from a real semicircle rather than a handful
+            // of waypoints. Interpolation between keyframes is linear, so a
+            // sparse arc shows its corners; 24 samples reads as a curve.
             function orbit(el, delta, lift) {
-                var frames = [
-                    { transform: 'translate(' + delta + 'px, 0)' },
-                    { transform: 'translate(' + (delta * 0.75) + 'px, ' + (lift * 0.72) + 'em)' },
-                    { transform: 'translate(' + (delta * 0.5) + 'px, ' + lift + 'em)' },
-                    { transform: 'translate(' + (delta * 0.25) + 'px, ' + (lift * 0.72) + 'em)' },
-                    { transform: 'translate(0px, 0)' }
-                ];
+                var STEPS = 24;
+                var frames = [];
+                for (var s = 0; s <= STEPS; s++) {
+                    var t = s / STEPS;
+                    // x eases naturally at both ends because it follows the
+                    // cosine of the angle, which is what circular travel does.
+                    var x = delta * (1 + Math.cos(Math.PI * t)) / 2;
+                    var y = lift * Math.sin(Math.PI * t);
+                    frames.push({
+                        transform: 'translate(' + x.toFixed(2) + 'px, ' + y.toFixed(3) + 'em)',
+                        offset: t
+                    });
+                }
                 if (!el.animate) {
                     el.style.transform = 'none';
                     return null;
                 }
                 var anim = el.animate(frames, {
                     duration: DUR,
-                    easing: 'cubic-bezier(0.5, 0, 0.5, 1)',
+                    // Mild, symmetric. A stronger curve on top of the cosine
+                    // path double-eases the ends and reads as hesitation.
+                    easing: 'cubic-bezier(0.42, 0, 0.58, 1)',
                     fill: 'both'
                 });
                 animations.push(anim);
@@ -358,21 +372,34 @@
 
         /* ---- beat 5: "PlebbiAn" — the leading letter lowercases -------
            After the swap ai2 sits first, so it is the one that changes. */
-        at(3880, function () {
-            ai2.style.transition = 'width 0.45s var(--ease)';
+        at(4420, function () {
+            ai2.style.transition = 'width 0.58s var(--ease-soft)';
             setChar(ai2, 'i');
             ai2.style.width = W.i + 'px';
         });
 
         /* ---- beat 6: "Plebbian" — and the second ---------------------- */
-        at(4230, function () {
-            ai1.style.transition = 'width 0.45s var(--ease)';
+        at(4830, function () {
+            ai1.style.transition = 'width 0.58s var(--ease-soft)';
             setChar(ai1, 'a');
             ai1.style.width = W.a + 'px';
         });
 
         /* ---- the glass retires into the settled gradient ------------- */
-        at(4600, function () {
+        at(5290, function () {
+            // The settled rule adds padding-inline so background-clip:text has
+            // room to paint the glyph's overhang, with a negative margin
+            // cancelling it out. The explicit widths set above are border-box,
+            // so they have to grow by the same amount or the padding eats the
+            // content box and clips the "a" tail for the rest of the sequence.
+            // Width, padding and margin all change in this one frame, so the
+            // glyph does not visibly move.
+            var padAllow = parseFloat(getComputedStyle(root).fontSize) * 0.16;
+            ai1.style.transition = 'none';
+            ai2.style.transition = 'none';
+            ai1.style.width = (W.i + padAllow) + 'px';
+            ai2.style.width = (W.a + padAllow) + 'px';
+
             root.classList.add('settled');
             [ai1, ai2].forEach(function (g) {
                 g.classList.add('filling');
@@ -381,14 +408,14 @@
         });
 
         /* ---- beat 7: the domain stamp -------------------------------- */
-        at(4880, function () {
+        at(5620, function () {
             if (!domain) return;
             domain.classList.add('revealing');
             domain.classList.remove('pending');
         });
 
         /* ---- cleanup: hand layout back to normal text flow ----------- */
-        at(5400, function () {
+        at(6240, function () {
             settle();
             try { sessionStorage.setItem(SESSION_KEY, '1'); } catch (e) { /* private mode */ }
         });

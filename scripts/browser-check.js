@@ -105,8 +105,10 @@ function serve() {
         });
 
         await tab.goto(`http://localhost:${PORT}/${page}`, { waitUntil: 'load', timeout: 20000 });
-        // Long enough for the wordmark sequence (~5s) to finish settling.
-        await new Promise((r) => setTimeout(r, 6500));
+        // The wordmark sequence settles at ~6.25s, and it only starts once the
+        // webfonts have loaded. Wait well past that: sampling mid-sequence
+        // would report the overlay's text nodes and fail confusingly.
+        await new Promise((r) => setTimeout(r, 9000));
 
         const state = await tab.evaluate(() => {
             const de = document.documentElement;

@@ -53,6 +53,9 @@
     --radius-xl: 28px;
     --wrap: 1180px;
     --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    /* Gentler than --ease, which snaps hard out of the gate. Used where the
+       motion should feel unhurried rather than sprung. */
+    --ease-soft: cubic-bezier(0.33, 0, 0.2, 1);
 }
 
 /* Dark is the default and the design's home. */
@@ -764,6 +767,14 @@ kbd {
     background-clip: text;
     -webkit-text-fill-color: transparent;
     filter: var(--ai-rest-glow, none);
+    /* background-clip:text only paints where the background exists, i.e.
+       inside the box. With the display tracking pulled in to -0.045em these
+       glyphs are wider than their own advance — "a" overhangs by about 2.4px
+       at hero size — so its tail fell outside the box and simply was not
+       painted, reading as though the "n" had cut it off. The padding widens
+       the background; the matching negative margin keeps the layout identical. */
+    padding-inline: 0.08em;
+    margin-inline: -0.08em;
     /* Once settled the pair breathes: the fill rises over the clipped gradient
        and recedes again. Animating -webkit-text-fill-color is what makes this
        work — a gradient cannot be interpolated, but fading a solid colour in
@@ -790,7 +801,7 @@ kbd {
     transition: width 0.55s var(--ease), opacity 0.5s ease, transform 0.6s var(--ease);
 }
 
-.wordmark.animating .g.spacer { transition: width 0.55s var(--ease); }
+.wordmark.animating .g.spacer { transition: width 0.66s var(--ease-soft); }
 
 /* --------------------------------------------------------------------------
    The "AI" pair
