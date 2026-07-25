@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Plebbian">
+    <defs>
+        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#3b82f6"/>
+            <stop offset="0.55" stop-color="#8b5cf6"/>
+            <stop offset="1" stop-color="#ec4899"/>
+        </linearGradient>
+    </defs>
+    <rect width="64" height="64" rx="15" fill="#0f172a"/>
+    <rect x="0.75" y="0.75" width="62.5" height="62.5" rx="14.25" fill="none" stroke="url(#g)" stroke-opacity="0.4" stroke-width="1.5"/>
+    <!-- "P" in white with the hidden "ai" of Plebbian picked out in gradient -->
+    <path d="M18 15h11.4c6.6 0 10.6 3.7 10.6 9.4 0 5.8-4.1 9.5-10.8 9.5H24v15h-6zm6 5.1v8.7h4.9c3.2 0 5.1-1.6 5.1-4.4 0-2.7-1.9-4.3-5.1-4.3z" fill="#f8fafc"/>
+    <circle cx="44" cy="20" r="3.2" fill="url(#g)"/>
+    <circle cx="44" cy="44" r="3.2" fill="url(#g)"/>
+</svg>
