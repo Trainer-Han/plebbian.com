@@ -85,6 +85,7 @@
     --dot: rgba(148, 163, 184, 0.55);
     --grid-line: rgba(148, 163, 184, 0.06);
     --ai-rest-glow: drop-shadow(0 0 12px rgba(236, 72, 153, 0.28));
+    --ia-breathe-peak: #ffffff;
 }
 
 :root[data-theme='light'] {
@@ -116,6 +117,9 @@
     --grid-line: rgba(15, 23, 42, 0.05);
     /* A bloom behind dark text on a light page just reads as smudge. */
     --ai-rest-glow: none;
+    /* Breathing to white would erase the letters here, so the light
+       theme breathes towards its darkest ink instead. */
+    --ia-breathe-peak: #0b1220;
 }
 
 /* --------------------------------------------------------------------------
@@ -760,6 +764,16 @@ kbd {
     background-clip: text;
     -webkit-text-fill-color: transparent;
     filter: var(--ai-rest-glow, none);
+    /* Once settled the pair breathes: the fill rises over the clipped gradient
+       and recedes again. Animating -webkit-text-fill-color is what makes this
+       work — a gradient cannot be interpolated, but fading a solid colour in
+       over the top of one can. */
+    animation: iaBreathe 7s ease-in-out infinite;
+}
+
+@keyframes iaBreathe {
+    0%, 100% { -webkit-text-fill-color: transparent; }
+    50%      { -webkit-text-fill-color: var(--ia-breathe-peak, #ffffff); }
 }
 
 /* While the sequence runs the glyphs become flex items with measured widths,

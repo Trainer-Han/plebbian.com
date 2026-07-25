@@ -113,8 +113,10 @@
                 '<feComponentTransfer in="SourceAlpha" result="inv">' +
                     '<feFuncA type="table" tableValues="1 0"/>' +
                 '</feComponentTransfer>' +
-                '<feGaussianBlur in="inv" stdDeviation="' + (size * 0.055).toFixed(2) + '" result="spread"/>' +
-                '<feFlood flood-color="#ff3fa4" result="tint"/>' +
+                '<feGaussianBlur in="inv" stdDeviation="' + (size * 0.04).toFixed(2) + '" result="spread"/>' +
+                // Softer and less saturated, so the letters read as white with
+                // a hint of colour at the edges rather than pink-filled.
+                '<feFlood flood-color="#ff5cb0" flood-opacity="0.62" result="tint"/>' +
                 '<feComposite in="tint" in2="spread" operator="in" result="glow"/>' +
                 '<feComposite in="glow" in2="SourceAlpha" operator="in" result="inner"/>' +
                 '<feMerge>' +
