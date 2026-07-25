@@ -1,15 +1,30 @@
 /* ==========================================================================
    Plebbian — hero wordmark sequence
 
-     Pleb  ->  Pleb AI  ->  PlebbAIn  ->  PlebbIAn  ->  Plebbian  ->  .com
+     Pleb
+     Pleb AI
+     PlebbAIn
+     PlebbIAn      the pair spins clockwise and swaps
+     PlebbiAn      first letter lowercases
+     Plebbian      second letter lowercases
+     Plebbian      + the .com stamp
 
-   The joke is that "Plebbian" already contains "ai" (Plebb·ia·n), so the
-   two glyphs that arrive as a glowing "AI" are the same two that swap and
+   The joke is that "Plebbian" already contains "ai" (Plebb·ia·n), so the two
+   glyphs that arrive as a glowing "AI" are the same two that swap and
    lowercase into the finished name.
 
-   The markup in the HTML is the FINAL state. Everything here is additive,
-   so no-JS visitors and anyone with prefers-reduced-motion simply keep the
-   settled wordmark. Runs once per session; the replay control re-runs it.
+   Two things are deliberate about the layout:
+
+   · Each slot is sized to its OWN character, never to a shared box. A shared
+     box made "I" float in a gap as wide as "A" — the letter spacing looked
+     broken.
+   · Nothing is ever clipped. Letters that have not arrived are hidden with
+     opacity; width only makes room for them. Clipping a growing, centred slot
+     was shaving the second "b" into a sliver.
+
+   The markup in the HTML is the FINAL state, so no-JS visitors and anyone
+   with prefers-reduced-motion simply keep the settled wordmark. Runs once per
+   session; the replay control re-runs it.
    ========================================================================== */
 (function () {
     'use strict';
@@ -22,11 +37,11 @@
     var SESSION_KEY = 'pleb.wordmark.played';
 
     var glyphs = Array.prototype.slice.call(root.querySelectorAll('.g'));
-    var slotB = root.querySelector('[data-role="b2"]');    // the second "b"
-    var slotN = root.querySelector('[data-role="n"]');     // trailing "n"
+    var slotB = root.querySelector('[data-role="b2"]');
+    var slotN = root.querySelector('[data-role="n"]');
     var slotSpace = root.querySelector('[data-role="space"]');
-    var ai1 = root.querySelector('[data-role="ai1"]');     // rests as "i"
-    var ai2 = root.querySelector('[data-role="ai2"]');     // rests as "a"
+    var ai1 = root.querySelector('[data-role="ai1"]');   // rests as "i"
+    var ai2 = root.querySelector('[data-role="ai2"]');   // rests as "a"
 
     if (!slotB || !slotN || !slotSpace || !ai1 || !ai2) return;
 
@@ -35,44 +50,58 @@
     });
 
     var timers = [];
+    var animations = [];
     var running = false;
 
     function at(ms, fn) { timers.push(setTimeout(fn, ms)); }
-    function clearTimers() { timers.forEach(clearTimeout); timers = []; }
+
+    function clearPending() {
+        timers.forEach(clearTimeout);
+        timers = [];
+        animations.forEach(function (a) { try { a.cancel(); } catch (e) { /* already gone */ } });
+        animations = [];
+    }
 
     function prefersReduced() {
         return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     }
 
-    /* Measure a slot's natural width for a given character. */
-    function widthOf(el, text) {
-        var prevText = el.textContent;
-        var prevWidth = el.style.width;
-        el.style.width = 'auto';
-        el.textContent = text;
-        var w = el.getBoundingClientRect().width;
-        el.textContent = prevText;
-        el.style.width = prevWidth;
+    /* The overlays that draw the glass edge and the travelling glow are
+       pseudo-elements using content:attr(data-char), so the attribute has to
+       track the character. */
+    function setChar(slot, ch) {
+        slot.textContent = ch;
+        slot.setAttribute('data-char', ch);
+    }
+
+    /* Natural advance width of one character in this slot. */
+    function widthOf(slot, ch) {
+        var prevText = slot.textContent;
+        var prevWidth = slot.style.width;
+        slot.style.width = 'auto';
+        slot.textContent = ch;
+        var w = slot.getBoundingClientRect().width;
+        slot.textContent = prevText;
+        slot.style.width = prevWidth;
         return w;
     }
 
-    /* Strip every inline style and animation class — back to plain text. */
+    /* Strip everything the animation added — back to plain, reflowable text. */
     function settle() {
-        clearTimers();
+        clearPending();
         running = false;
         root.classList.remove('animating');
         glyphs.forEach(function (g) {
             g.removeAttribute('style');
             g.classList.remove('lit', 'filling', 'swapping');
         });
-        ai1.textContent = 'i';
-        ai2.textContent = 'a';
+        // DOM order is restored to match the visual order, so textContent
+        // reads "Plebbian" regardless of how the swap left things.
+        setChar(ai1, 'i');
+        setChar(ai2, 'a');
         slotSpace.textContent = '';
         root.classList.add('settled');
-        if (domain) {
-            domain.classList.remove('pending');
-            domain.classList.remove('revealing');
-        }
+        if (domain) domain.classList.remove('pending', 'revealing');
         if (replay) replay.hidden = false;
     }
 
@@ -81,94 +110,92 @@
         if (prefersReduced()) { settle(); return; }
 
         running = true;
-        clearTimers();
+        clearPending();
         root.classList.remove('settled');
 
         /* ---- measure the resting layout before touching anything ---- */
-        var natural = {};
-        glyphs.forEach(function (g, i) {
-            natural[i] = g.getBoundingClientRect().width;
-        });
+        var natural = glyphs.map(function (g) { return g.getBoundingClientRect().width; });
 
-        // One uniform box for both AI slots, wide enough for A, I, a and i,
-        // so swapping character and case never nudges the letters around it.
-        var uniform = Math.max(
-            widthOf(ai1, 'A'), widthOf(ai1, 'I'),
-            widthOf(ai1, 'a'), widthOf(ai1, 'i')
-        ) * 1.06;
-
-        var spaceWidth = widthOf(slotSpace, ' ') * 0.9;
-        var naturalAi1 = widthOf(ai1, 'i');
-        var naturalAi2 = widthOf(ai2, 'a');
-        var naturalB = widthOf(slotB, 'b');
-        var naturalN = widthOf(slotN, 'n');
+        var W = {
+            A: widthOf(ai1, 'A'),
+            I: widthOf(ai1, 'I'),
+            i: widthOf(ai1, 'i'),
+            a: widthOf(ai2, 'a'),
+            b: widthOf(slotB, 'b'),
+            n: widthOf(slotN, 'n')
+        };
+        // A single space collapses to nothing inside an inline-block, so the
+        // "Pleb AI" gap comes from the font size instead of a measurement.
+        var gap = parseFloat(getComputedStyle(root).fontSize) * 0.3;
 
         root.classList.add('animating');
+
+        // Explicit order on every slot. Flex sorts by order group, so if only
+        // the two AI slots carried an order they would jump ahead of "n".
         glyphs.forEach(function (g, i) {
+            g.style.order = String(i + 1);
             g.style.width = natural[i] + 'px';
         });
 
         /* ---- beat 1: "Pleb" ------------------------------------------- */
-        // Collapse everything that hasn't arrived yet.
         [slotB, slotN].forEach(function (g) {
             g.style.width = '0px';
             g.style.opacity = '0';
             g.style.transform = 'translateY(-0.34em)';
         });
         slotSpace.style.width = '0px';
-        ai1.style.width = '0px';
-        ai2.style.width = '0px';
-        ai1.style.opacity = '0';
-        ai2.style.opacity = '0';
-        ai1.textContent = 'A';
-        ai2.textContent = 'I';
+        [ai1, ai2].forEach(function (g) {
+            g.style.width = '0px';
+            g.style.opacity = '0';
+        });
+        setChar(ai1, 'A');
+        setChar(ai2, 'I');
 
         base.forEach(function (g, i) {
             g.style.transition = 'none';
             g.style.opacity = '0';
             g.style.transform = 'translateY(0.22em)';
-            at(60 + i * 105, function () {
+            at(60 + i * 100, function () {
                 g.style.transition = 'opacity 0.5s ease, transform 0.6s var(--ease)';
                 g.style.opacity = '1';
                 g.style.transform = 'none';
             });
         });
 
-        /* ---- beat 2: "Pleb AI" — AI drifts in from the right ---------- */
-        at(700, function () {
-            slotSpace.style.width = spaceWidth + 'px';
+        /* ---- beat 2: "Pleb AI" — the pair drifts in from the right ---- */
+        at(640, function () {
+            slotSpace.style.width = gap + 'px';
 
-            [ai1, ai2].forEach(function (g, i) {
+            [[ai1, W.A], [ai2, W.I]].forEach(function (pair, i) {
+                var g = pair[0];
                 g.classList.add('lit');
-                // Offset the two glyphs' pulse so the pink/gold drift reads as
-                // a wave moving through the pair rather than one flat blink.
-                g.style.animationDelay = (i * -0.9) + 's';
+                // Offset so the pink/gold drift reads as a wave through the
+                // pair rather than one flat blink.
+                g.style.animationDelay = (i * -0.9) + 's, ' + (i * -1.2) + 's';
                 g.style.transition = 'none';
-                g.style.width = uniform + 'px';
-                // Off to the right, the far letter trailing behind.
-                g.style.transform = 'translateX(' + (330 + i * 110) + 'px)';
+                g.style.width = pair[1] + 'px';
+                g.style.transform = 'translateX(' + (320 + i * 110) + 'px)';
                 g.style.opacity = '0';
 
                 at(30, function () {
-                    // Long, decelerating glide — the "chill" part.
                     g.style.transition =
-                        'transform 1.05s cubic-bezier(0.16, 1, 0.3, 1) ' + (i * 0.1) + 's,' +
-                        'opacity 0.75s ease ' + (i * 0.1) + 's';
+                        'transform 1s cubic-bezier(0.16, 1, 0.3, 1) ' + (i * 0.1) + 's,' +
+                        'opacity 0.7s ease ' + (i * 0.1) + 's';
                     g.style.transform = 'none';
                     g.style.opacity = '1';
                 });
             });
         });
 
-        /* ---- beat 3: "PlebbAIn" — b and n float in -------------------
-           Held a moment first so the outline glow gets to breathe alone. */
+        /* ---- beat 3: "PlebbAIn" — b and n drop in --------------------
+           Held first so the glass letters get a moment on their own. */
         at(2050, function () {
             slotSpace.style.width = '0px';
-            [[slotB, naturalB], [slotN, naturalN]].forEach(function (pair, i) {
+            [[slotB, W.b], [slotN, W.n]].forEach(function (pair, i) {
                 var g = pair[0];
-                at(i * 130, function () {
+                at(i * 120, function () {
                     g.style.transition =
-                        'width 0.55s var(--ease), opacity 0.5s ease, transform 0.6s var(--ease)';
+                        'width 0.5s var(--ease), opacity 0.5s ease, transform 0.6s var(--ease)';
                     g.style.width = pair[1] + 'px';
                     g.style.opacity = '1';
                     g.style.transform = 'none';
@@ -176,91 +203,100 @@
             });
         });
 
-        /* ---- beat 4: "PlebbIAn" — the swap, on an arc ---------------- */
-        at(2950, function () {
-            // Both slots share `uniform` width, so the centre-to-centre
-            // distance is symmetric and the exchange is exact.
-            var d = ai2.getBoundingClientRect().left - ai1.getBoundingClientRect().left;
-            var dur = 760;
+        /* ---- beat 4: "PlebbIAn" — spin clockwise and swap ------------
+           Done by exchanging the two slots' flex order and playing a FLIP:
+           read positions, reorder, then animate each glyph from where it used
+           to be along a clockwise semicircle. Because flex recomputes the
+           layout, the letters keep their own widths and land exactly. */
+        at(2900, function () {
+            var before1 = ai1.getBoundingClientRect().left;
+            var before2 = ai2.getBoundingClientRect().left;
 
-            function arc(el, dx, lift) {
-                if (!el.animate) {
-                    el.style.transition = 'transform ' + dur + 'ms var(--ease)';
-                    el.style.transform = 'translateX(' + dx + 'px)';
-                    return null;
-                }
-                return el.animate([
-                    { transform: 'translateX(0) translateY(0)' },
-                    { transform: 'translateX(' + (dx / 2) + 'px) translateY(' + lift + 'em)' },
-                    { transform: 'translateX(' + dx + 'px) translateY(0)' }
-                ], { duration: dur, easing: 'cubic-bezier(0.5, 0, 0.5, 1)', fill: 'forwards' });
-            }
+            var o1 = ai1.style.order;
+            ai1.style.order = ai2.style.order;
+            ai2.style.order = o1;
+
+            var delta1 = before1 - ai1.getBoundingClientRect().left;
+            var delta2 = before2 - ai2.getBoundingClientRect().left;
 
             ai1.classList.add('swapping');
             ai2.classList.add('swapping');
+            ai1.style.transition = 'none';
+            ai2.style.transition = 'none';
 
-            // "A" arcs over the top, "I" dips under — they never collide.
-            var a1 = arc(ai1, d, -0.42);
-            var a2 = arc(ai2, -d, 0.3);
+            var DUR = 800;
 
-            at(dur + 20, function () {
-                // FLIP snap: exchange the characters and drop the transforms
-                // in the same frame, so nothing appears to move.
-                [a1, a2].forEach(function (anim) { if (anim) anim.cancel(); });
-                ai1.style.transition = 'none';
-                ai2.style.transition = 'none';
+            // lift is negative for the glyph travelling right (it arcs over
+            // the top) and positive for the one travelling left, which makes
+            // the pair rotate clockwise. Each glyph also spins a full turn
+            // clockwise, ending upright.
+            function orbit(el, delta, lift) {
+                var frames = [
+                    { transform: 'translate(' + delta + 'px, 0) rotate(0deg)' },
+                    { transform: 'translate(' + (delta * 0.5) + 'px, ' + lift + 'em) rotate(180deg)' },
+                    { transform: 'translate(0px, 0) rotate(360deg)' }
+                ];
+                if (!el.animate) {
+                    el.style.transform = 'none';
+                    return null;
+                }
+                var anim = el.animate(frames, {
+                    duration: DUR,
+                    easing: 'cubic-bezier(0.5, 0, 0.5, 1)',
+                    fill: 'both'
+                });
+                animations.push(anim);
+                return anim;
+            }
+
+            // delta is where the glyph came FROM, so the sign tells us which
+            // way it is travelling: negative delta means it moves right.
+            orbit(ai1, delta1, delta1 < 0 ? -0.42 : 0.34);
+            orbit(ai2, delta2, delta2 < 0 ? -0.42 : 0.34);
+
+            at(DUR + 20, function () {
+                animations.forEach(function (a) { try { a.cancel(); } catch (e) {} });
+                animations = [];
                 ai1.style.transform = 'none';
                 ai2.style.transform = 'none';
-                ai1.textContent = 'I';
-                ai2.textContent = 'A';
                 ai1.classList.remove('swapping');
                 ai2.classList.remove('swapping');
             });
         });
 
-        /* ---- beat 5: case cycles down to "Plebbian" ------------------ */
-        at(3820, function () {
-            var frames = [
-                ['i', 'a'], ['I', 'A'], ['i', 'a'], ['I', 'A'], ['i', 'a']
-            ];
-            var step = 115;
+        /* ---- beat 5: "PlebbiAn" — the leading letter lowercases -------
+           After the swap ai2 sits first, so it is the one that changes. */
+        at(3880, function () {
+            ai2.style.transition = 'width 0.45s var(--ease)';
+            setChar(ai2, 'i');
+            ai2.style.width = W.i + 'px';
+        });
 
-            frames.forEach(function (pair, i) {
-                at(i * step, function () {
-                    ai1.textContent = pair[0];
-                    ai2.textContent = pair[1];
+        /* ---- beat 6: "Plebbian" — and the second ---------------------- */
+        at(4230, function () {
+            ai1.style.transition = 'width 0.45s var(--ease)';
+            setChar(ai1, 'a');
+            ai1.style.width = W.a + 'px';
+        });
 
-                    // Swap outline for the settled gradient on a flicker frame:
-                    // the character change covers the handover, so the fill-in
-                    // reads as intentional rather than as a pop.
-                    if (i === 2) {
-                        root.classList.add('settled');
-                        [ai1, ai2].forEach(function (g) {
-                            g.classList.add('filling');
-                            g.classList.remove('lit');
-                        });
-                    }
-                });
-            });
-
-            // Slots relax from the uniform box back to their true widths.
-            at(frames.length * step + 70, function () {
-                [[ai1, naturalAi1], [ai2, naturalAi2]].forEach(function (pair) {
-                    pair[0].style.transition = 'width 0.5s var(--ease)';
-                    pair[0].style.width = pair[1] + 'px';
-                });
+        /* ---- the glass retires into the settled gradient ------------- */
+        at(4600, function () {
+            root.classList.add('settled');
+            [ai1, ai2].forEach(function (g) {
+                g.classList.add('filling');
+                g.classList.remove('lit');
             });
         });
 
-        /* ---- beat 6: the domain stamp -------------------------------- */
-        at(4380, function () {
+        /* ---- beat 7: the domain stamp -------------------------------- */
+        at(4880, function () {
             if (!domain) return;
             domain.classList.add('revealing');
             domain.classList.remove('pending');
         });
 
         /* ---- cleanup: hand layout back to normal text flow ----------- */
-        at(4980, function () {
+        at(5400, function () {
             settle();
             try { sessionStorage.setItem(SESSION_KEY, '1'); } catch (e) { /* private mode */ }
         });
@@ -272,8 +308,7 @@
 
     if (replay) {
         replay.addEventListener('click', function () {
-            if (running) return;
-            play();
+            if (!running) play();
         });
     }
 
@@ -282,8 +317,8 @@
     } else {
         if (domain) domain.classList.add('pending');
         if (replay) replay.hidden = true;
-        // Wait for the webfonts so glyph measurements aren't taken against
-        // the fallback face — a wrong measurement means visible jitter.
+        // Wait for the webfonts, or every width measurement is taken against
+        // the fallback face and the letters visibly shift when Archivo lands.
         var start = function () { requestAnimationFrame(play); };
         if (document.fonts && document.fonts.ready) {
             document.fonts.ready.then(start).catch(start);

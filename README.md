@@ -86,11 +86,43 @@ the nav, edit it in each page.
 
 ## The wordmark
 
-The hero animates `Pleb` → `Pleb AI` → `PlebbAIn` → `PlebbIAn` → `Plebbian`,
-then fades in the domain stamp. The point is that **Plebbian already contains
-"ai"** — `Plebb·ia·n` — so the two glyphs that arrive as a glowing `AI` are the
-same two that swap and lowercase into the finished name. Those letters keep a
-gradient tint at rest so the static logo still carries the idea.
+The hero animates through seven states:
+
+```
+Pleb
+Pleb AI            the pair drifts in from the right as liquid glass
+PlebbAIn           b and n drop in
+PlebbIAn           the pair spins clockwise and swaps places
+PlebbiAn           the leading letter lowercases
+Plebbian
+Plebbian + .com    the domain stamp fades in beneath
+```
+
+The point is that **Plebbian already contains "ai"** — `Plebb·ia·n` — so the two
+glyphs that arrive as a glowing `AI` are the same two that swap and lowercase
+into the finished name. Those letters keep a gradient tint at rest, so the
+static logo still carries the idea.
+
+The `AI` pair is rendered as three stacked layers sharing one glyph origin: a
+translucent glass body (`background-clip: text` with a sliding specular
+highlight), a bright edge, and a stroked copy masked by a rotating
+conic-gradient so a highlight travels around each letter's outline. Every layer
+is glyph-shaped — fills are clipped to text, edges are `text-stroke`, and the
+bloom is `drop-shadow`, which samples the glyph's alpha. Nothing uses
+`box-shadow` and nothing is clipped, so no rectangles appear.
+
+Two layout rules matter, both of which were bugs first:
+
+- **Each slot is sized to its own character**, never a shared box. A shared box
+  sized to the widest glyph left `I` floating in a gap as wide as `A`.
+- **Nothing is clipped.** Letters that have not arrived are hidden with
+  opacity; width only makes room for them. Clipping a growing, centred slot
+  was shaving the second `b` into a sliver.
+
+The swap exchanges the two slots' flex `order` and plays a FLIP: read
+positions, reorder, then animate each glyph from where it used to be along a
+clockwise semicircle with a full turn. Letting flex recompute the layout is
+what keeps the letters at their own widths and landing exactly.
 
 It runs once per session (`sessionStorage`), with a replay control under the
 wordmark. The HTML holds the *finished* state, so anyone with JavaScript off or
