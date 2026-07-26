@@ -25,7 +25,10 @@ only goes live when `live-website` moves.
 
 Rules on `live-website`:
 
-- **Direct pushes are blocked.** Everything arrives through a pull request.
+- **Direct pushes are blocked**, both by branch protection and by a local
+  `pre-push` hook (`scripts/hooks/pre-push`). Everything arrives via a PR.
+- **Merging is the owner's decision.** Opening a PR is fine; merging it is
+  not something tooling or an assistant should do on its own.
 - **The `verify` check must pass** before the PR can merge.
 - **The branch must be up to date** with its base before merging.
 - No approving review is required, since this is a one-person repo — the
@@ -90,9 +93,9 @@ The hero animates through seven states:
 
 ```
 Pleb
-Pleb AI            the pair drifts in from the right as liquid glass
+Pleb AI            the pair drifts in from the right
 PlebbAIn           b and n drop in
-PlebbIAn           the pair spins clockwise and swaps places
+PlebbIAn           the pair swaps places, travelling clockwise
 PlebbiAn           the leading letter lowercases
 Plebbian
 Plebbian + .com    the domain stamp fades in beneath
@@ -103,13 +106,25 @@ glyphs that arrive as a glowing `AI` are the same two that swap and lowercase
 into the finished name. Those letters keep a gradient tint at rest, so the
 static logo still carries the idea.
 
-The `AI` pair is rendered as three stacked layers sharing one glyph origin: a
-translucent glass body (`background-clip: text` with a sliding specular
-highlight), a bright edge, and a stroked copy masked by a rotating
-conic-gradient so a highlight travels around each letter's outline. Every layer
-is glyph-shaped — fills are clipped to text, edges are `text-stroke`, and the
-bloom is `drop-shadow`, which samples the glyph's alpha. Nothing uses
-`box-shadow` and nothing is clipped, so no rectangles appear.
+The `AI` pair is drawn as SVG, not CSS text: white letters with a coloured
+glow just inside their edges, and a light that runs around the outline like a
+snake.
+
+Both effects need SVG. The snake is `stroke-dasharray` on the glyph's own
+path — a short dash on a long gap, with only `stroke-dashoffset` animated, so
+the light follows the contour. The first attempt used a rotating
+conic-gradient mask in CSS, which sweeps a wedge out from the centre and
+lights a radial slice: it read as a sonar display, not as something moving
+along the outline. The inner glow is a real one too — `SourceAlpha` inverted,
+blurred, tinted, then composited back inside the glyph, so the light sits
+within the edges rather than haloing outside them.
+
+`wordmark.js` builds the overlay and positions it by measuring the slot's
+baseline with a zero-height inline-block strut, which is more reliable than
+deriving it from line-height and font metrics. Note the overlay is wider than
+its slot to give the glow room, so it needs `max-width: none` — the global
+`svg { max-width: 100% }` reset otherwise squeezes it and scales the whole
+viewBox down.
 
 Two layout rules matter, both of which were bugs first:
 
@@ -121,8 +136,10 @@ Two layout rules matter, both of which were bugs first:
 
 The swap exchanges the two slots' flex `order` and plays a FLIP: read
 positions, reorder, then animate each glyph from where it used to be along a
-clockwise semicircle with a full turn. Letting flex recompute the layout is
-what keeps the letters at their own widths and landing exactly.
+clockwise semicircle — the one travelling right arcs over the top, the one
+travelling left dips under. The letters stay upright; they change places, they
+do not spin. Letting flex recompute the layout is what keeps them at their own
+differing widths and landing exactly.
 
 It runs once per session (`sessionStorage`), with a replay control under the
 wordmark. The HTML holds the *finished* state, so anyone with JavaScript off or

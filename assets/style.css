@@ -53,6 +53,9 @@
     --radius-xl: 28px;
     --wrap: 1180px;
     --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    /* Gentler than --ease, which snaps hard out of the gate. Used where the
+       motion should feel unhurried rather than sprung. */
+    --ease-soft: cubic-bezier(0.33, 0, 0.2, 1);
 }
 
 /* Dark is the default and the design's home. */
@@ -85,6 +88,7 @@
     --dot: rgba(148, 163, 184, 0.55);
     --grid-line: rgba(148, 163, 184, 0.06);
     --ai-rest-glow: drop-shadow(0 0 12px rgba(236, 72, 153, 0.28));
+    --ia-breathe-peak: #ffffff;
 }
 
 :root[data-theme='light'] {
@@ -116,6 +120,9 @@
     --grid-line: rgba(15, 23, 42, 0.05);
     /* A bloom behind dark text on a light page just reads as smudge. */
     --ai-rest-glow: none;
+    /* Breathing to white would erase the letters here, so the light
+       theme breathes towards its darkest ink instead. */
+    --ia-breathe-peak: #0b1220;
 }
 
 /* --------------------------------------------------------------------------
@@ -738,14 +745,6 @@ kbd {
    reduced-motion visitors get a correct wordmark with no scripting.
    -------------------------------------------------------------------------- */
 
-/* Registered so the conic-gradient mask angle can be animated. Without the
-   registration the browser treats it as a string and cannot interpolate. */
-@property --ai-angle {
-    syntax: '<angle>';
-    inherits: false;
-    initial-value: 0deg;
-}
-
 .wordmark {
     display: block;
     white-space: nowrap;
@@ -768,6 +767,24 @@ kbd {
     background-clip: text;
     -webkit-text-fill-color: transparent;
     filter: var(--ai-rest-glow, none);
+    /* background-clip:text only paints where the background exists, i.e.
+       inside the box. With the display tracking pulled in to -0.045em these
+       glyphs are wider than their own advance — "a" overhangs by about 2.4px
+       at hero size — so its tail fell outside the box and simply was not
+       painted, reading as though the "n" had cut it off. The padding widens
+       the background; the matching negative margin keeps the layout identical. */
+    padding-inline: 0.08em;
+    margin-inline: -0.08em;
+    /* Once settled the pair breathes: the fill rises over the clipped gradient
+       and recedes again. Animating -webkit-text-fill-color is what makes this
+       work — a gradient cannot be interpolated, but fading a solid colour in
+       over the top of one can. */
+    animation: iaBreathe 7s ease-in-out infinite;
+}
+
+@keyframes iaBreathe {
+    0%, 100% { -webkit-text-fill-color: transparent; }
+    50%      { -webkit-text-fill-color: var(--ia-breathe-peak, #ffffff); }
 }
 
 /* While the sequence runs the glyphs become flex items with measured widths,
@@ -784,122 +801,101 @@ kbd {
     transition: width 0.55s var(--ease), opacity 0.5s ease, transform 0.6s var(--ease);
 }
 
-.wordmark.animating .g.spacer { transition: width 0.55s var(--ease); }
+.wordmark.animating .g.spacer { transition: width 0.66s var(--ease-soft); }
 
 /* --------------------------------------------------------------------------
-   Liquid glass "AI"
+   The "AI" pair
 
-   Three stacked layers, all sharing the glyph's exact origin:
-     · the slot's own text  — translucent glass body with a specular sheen
-     · ::before             — a soft bright edge, so the glass has definition
-     · ::after              — a bright arc masked by a rotating conic gradient,
-                              which reads as a glow travelling around the
-                              letter's outline
+   White letters, a coloured glow hugging the inside of their edges, and a
+   light that runs around the outline like a snake.
 
-   Everything is glyph-shaped: the fills are background-clip:text, the edges
-   are text-stroke, and the bloom is drop-shadow (which samples the glyph's
-   alpha). No box-shadow and no clipping, so no rectangles anywhere.
+   All three are drawn with SVG rather than CSS, for one reason: the snake has
+   to follow the glyph's contour. A conic-gradient mask — the previous
+   attempt — sweeps a wedge out from the centre, which lights a radial slice
+   and reads as a sonar sweep, not as something travelling along the outline.
+   Only stroke-dasharray on the glyph's own path does that.
+
+   The inner glow is likewise a real inner glow: the alpha is inverted,
+   blurred, tinted, then composited back inside the glyph, so the light sits
+   just within the edges instead of haloing outside them.
+
+   wordmark.js builds the SVG and positions it on the glyph's baseline.
    -------------------------------------------------------------------------- */
 .wordmark .g.ai.lit {
-    -webkit-text-fill-color: transparent;
+    /* The real text is hidden; the SVG overlay draws the letter. It stays in
+       the DOM because it is what sizes the slot. */
     color: transparent;
-    /* Glass body. On a dark page a low-alpha white fill just reads as a faded
-       letter, so the highlights are near-opaque and the mid-tones carry the
-       pink/gold tint — bright glass rather than grey translucency. */
-    background:
-        linear-gradient(148deg,
-            rgba(255, 255, 255, 0.98) 0%,
-            rgba(255, 232, 246, 0.62) 20%,
-            rgba(255, 214, 170, 0.95) 38%,
-            rgba(255, 255, 255, 0.55) 52%,
-            rgba(255, 176, 214, 0.92) 74%,
-            rgba(255, 245, 250, 0.99) 100%);
-    background-size: 260% 260%;
-    -webkit-background-clip: text;
-    background-clip: text;
-    animation:
-        aiSheen 7s ease-in-out infinite,
-        aiBloom 4.6s ease-in-out infinite;
+    -webkit-text-fill-color: transparent;
+    background: none;
 }
 
-/* The specular highlight slides across the glass. */
-@keyframes aiSheen {
-    0%, 100% { background-position: 0% 50%; }
-    50%      { background-position: 100% 50%; }
+.ai-svg {
+    position: absolute;
+    pointer-events: none;
+    overflow: visible;
+    /* The overlay is deliberately wider than its slot so the glow has room.
+       The global `svg { max-width: 100% }` reset would squeeze it back to the
+       slot width and scale the whole viewBox down with it. */
+    max-width: none;
+    /* Placement is set inline by wordmark.js from measured metrics. */
 }
 
-/* A slow pink/gold bloom behind the letter. */
+.ai-svg .ai-body {
+    fill: #ffffff;
+}
+
+/* The travelling light. The dash length and gap are set inline, scaled to the
+   font size; only the offset is animated, so the dash slides along the
+   contour. */
+.ai-svg .ai-snake {
+    fill: none;
+    stroke: #ffd9ec;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    animation: aiSnake 3.4s linear infinite, aiSnakeHue 5.2s ease-in-out infinite;
+}
+
+@keyframes aiSnake {
+    to { stroke-dashoffset: var(--snake-travel, -600); }
+}
+
+@keyframes aiSnakeHue {
+    0%, 100% { stroke: #ffd9ec; }
+    50%      { stroke: #ffeec4; }
+}
+
+/* A restrained bloom so the letters sit in the page rather than floating in
+   a cloud. drop-shadow samples the glyph alpha, so it stays letter-shaped. */
+.wordmark .g.ai.lit .ai-svg {
+    filter:
+        drop-shadow(0 0 4px color-mix(in srgb, var(--pink) 55%, transparent))
+        drop-shadow(0 0 14px color-mix(in srgb, var(--amber) 30%, transparent));
+    animation: aiBloom 4.6s ease-in-out infinite;
+}
+
 @keyframes aiBloom {
     0%, 100% {
         filter:
-            drop-shadow(0 0 4px color-mix(in srgb, var(--pink) 80%, transparent))
-            drop-shadow(0 0 12px color-mix(in srgb, var(--amber) 48%, transparent));
+            drop-shadow(0 0 4px color-mix(in srgb, var(--pink) 55%, transparent))
+            drop-shadow(0 0 14px color-mix(in srgb, var(--amber) 30%, transparent));
     }
     50% {
         filter:
-            drop-shadow(0 0 6px color-mix(in srgb, var(--amber) 85%, transparent))
-            drop-shadow(0 0 16px color-mix(in srgb, var(--pink) 55%, transparent));
+            drop-shadow(0 0 6px color-mix(in srgb, var(--amber) 62%, transparent))
+            drop-shadow(0 0 18px color-mix(in srgb, var(--pink) 38%, transparent));
     }
 }
 
-/* Shared geometry for both overlays. inset:0 with no text-align means the
-   pseudo's text shares the slot's origin, line box and baseline, so it lands
-   exactly on top of the real glyph. */
-.wordmark .g.ai.lit::before,
-.wordmark .g.ai.lit::after {
-    content: attr(data-char);
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
-}
-
-/* Glass edge */
-.wordmark .g.ai.lit::before {
-    -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.8);
-}
-
-/* The travelling glow. The conic gradient is centred on the glyph's box, so
-   its bright wedge sweeps around the letter, lighting whichever part of the
-   stroke it crosses. */
-.wordmark .g.ai.lit::after {
-    -webkit-text-stroke: 3px #fff;
-    -webkit-mask-image: conic-gradient(from var(--ai-angle),
-        transparent 0deg, #000 18deg, #000 62deg, transparent 88deg);
-    mask-image: conic-gradient(from var(--ai-angle),
-        transparent 0deg, #000 18deg, #000 62deg, transparent 88deg);
-    filter:
-        drop-shadow(0 0 3px #fff)
-        drop-shadow(0 0 9px var(--pink))
-        drop-shadow(0 0 20px color-mix(in srgb, var(--amber) 90%, transparent));
-    animation:
-        aiOrbit 3.6s linear infinite,
-        aiHue 5.4s ease-in-out infinite;
-}
-
-@keyframes aiOrbit {
-    to { --ai-angle: 360deg; }
-}
-
-@keyframes aiHue {
-    0%, 100% { -webkit-text-stroke-color: #ffe4f1; }
-    50%      { -webkit-text-stroke-color: #fff2d5; }
-}
-
-/* Handing over to the settled gradient: the overlays fade out and the bloom
-   retires, so the glass does not pop as it becomes flat gradient text. */
+/* Handing over to the settled gradient: the overlay fades out as the plain
+   gradient text underneath becomes visible again. */
 .wordmark .g.ai.filling {
-    animation: none;
-    filter: drop-shadow(0 0 16px color-mix(in srgb, var(--pink) 30%, transparent));
-    transition: filter 0.7s ease;
+    transition: color 0.5s ease, -webkit-text-fill-color 0.5s ease;
 }
 
-.wordmark .g.ai.filling::before,
-.wordmark .g.ai.filling::after {
+.wordmark .g.ai.filling .ai-svg {
     opacity: 0;
     animation: none;
-    transition: opacity 0.55s ease;
+    transition: opacity 0.5s ease;
 }
 
 /* The glyph lifted above its neighbour while orbiting during the swap. */
