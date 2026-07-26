@@ -1064,6 +1064,7 @@ kbd {
     box-shadow: var(--shadow);
 }
 
+.cell-full { grid-column: span 6; }
 .cell-wide { grid-column: span 4; }
 .cell-narrow { grid-column: span 2; }
 .cell-half { grid-column: span 3; }
@@ -1778,7 +1779,7 @@ footer a:hover { color: var(--text-bright); }
     .hero { padding: 138px 20px 86px; min-height: auto; }
     .section-head { margin-bottom: 44px; }
     .bento { grid-template-columns: 1fr; gap: 14px; }
-    .cell-wide, .cell-half, .cell-narrow { grid-column: span 1; }
+    .cell-full, .cell-wide, .cell-half, .cell-narrow { grid-column: span 1; }
     .cell { padding: 24px; }
     .contact { padding: 56px 22px; }
     .modal-box { padding: 26px; max-height: 88vh; }
