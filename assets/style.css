@@ -1153,23 +1153,25 @@ kbd {
     box-shadow: var(--shadow-lg);
 }
 
-/* The logo is gold on transparent, so the panel behind it commits to the
-   project's own black-and-gold rather than following the page theme —
-   in light mode a pale panel would leave the mark barely there. */
+/* The render carries its own black backdrop and lighting, so it fills the
+   panel edge to edge instead of floating on a gradient of ours. That also
+   keeps it identical in both themes, which is right for a brand mark. */
 .feature-visual {
-    display: grid;
-    place-items: center;
-    padding: 44px 40px;
+    position: relative;
+    min-height: 260px;
     border-right: 1px solid var(--line);
-    background:
-        radial-gradient(90% 90% at 30% 20%, rgba(197, 163, 87, 0.22), transparent 62%),
-        linear-gradient(150deg, #151824 0%, #0b0d14 100%);
+    overflow: hidden;
+    /* Matches the artwork's own background, so any rounding gap at the
+       panel's corners is invisible rather than a pale sliver. */
+    background: #0b0d14;
 }
 
 .feature-visual img {
+    position: absolute;
+    inset: 0;
     width: 100%;
-    max-width: 320px;
-    height: auto;
+    height: 100%;
+    object-fit: cover;
 }
 
 .feature-body {
@@ -1331,6 +1333,20 @@ kbd {
     background-size: 28px 28px;
 }
 
+/* Cover artwork, in place of the initials. The grid overlay is suppressed
+   alongside it — a repeating pattern laid over a real image reads as a screen
+   door rather than as texture. */
+.card-shot {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.card-cover.has-shot { background: #0b0d14; }
+.card-cover.has-shot::after { content: none; }
+
 .card-glyph {
     position: relative;
     font-family: var(--font-display);
@@ -1463,6 +1479,10 @@ kbd {
 
 .notice a { color: var(--blue); }
 
+/* Inside the project grid the notice sits alongside cards, so it has to
+   span every column rather than taking a single card's slot. */
+.projects .notice { grid-column: 1 / -1; }
+
 /* --------------------------------------------------------------------------
    Project modal
    -------------------------------------------------------------------------- */
@@ -1544,6 +1564,18 @@ kbd {
     gap: 12px;
     margin-top: 26px;
 }
+
+/* Co-authorship credit — only rendered for projects that declare one. */
+.modal-credit {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.modal-credit[hidden] { display: none; }
 
 /* --------------------------------------------------------------------------
    Skills marquee — one row, slower, pauses on hover/focus
@@ -1735,11 +1767,10 @@ footer a:hover { color: var(--text-bright); }
     /* Side by side, the logo panel gets too narrow to read as a brand mark. */
     .feature { grid-template-columns: 1fr; }
     .feature-visual {
-        padding: 34px 24px;
+        min-height: 220px;
         border-right: 0;
         border-bottom: 1px solid var(--line);
     }
-    .feature-visual img { max-width: 260px; }
 }
 
 @media (max-width: 768px) {

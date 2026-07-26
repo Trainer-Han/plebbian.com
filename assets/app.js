@@ -332,6 +332,43 @@
         return LANG_COLOURS[lang] || '#8b5cf6';
     }
 
+    /* Projects that aren't public GitHub repositories.
+       The grid is otherwise entirely API-driven, so work living in a private
+       repo would never appear in it. These are kept in the same shape as a
+       GitHub repo object — name, description, language — so the card, filter
+       and modal renderers treat them no differently.
+
+       Deliberately carrying no dates or counts: nothing here can go stale,
+       which is the only way a hand-written entry earns its place beside live
+       data. They sort ahead of the fetched repos. */
+    var MANUAL_PROJECTS = [
+        {
+            name: 'syntaxx.lol',
+            description: 'Discord bot for community servers — moderation and automod, ' +
+                'levelling and economy, private join-to-create voice channels, ' +
+                'cross-server calls, and a desktop dashboard for remote server support.',
+            language: 'JavaScript',
+            homepage: 'https://syntaxx.lol',
+            manual: true,
+            cover: 'assets/syntaxx-hero.webp',
+            note: 'syntaxx.lol',
+            badge: 'Co-built',
+            modalDesc: 'A Discord bot run across community servers, plus the desktop ' +
+                'app used to support them. Moderation, automod, warns and infractions, ' +
+                'levelling and economy, private join-to-create voice channels with an ' +
+                'owner control panel, and text "calls" relayed between servers. The ' +
+                'companion dashboard lets a developer manage a server\'s settings ' +
+                'remotely, but only after its owner grants consent over DM.',
+            facts: [
+                { label: 'Language', value: 'JavaScript' },
+                { label: 'Stack', value: 'discord.js · MongoDB' },
+                { label: 'Desktop app', value: 'Python · PySide6' },
+                { label: 'Source', value: 'Private' }
+            ],
+            credit: 'Built with Louis (lode787).'
+        }
+    ];
+
     function relativeDate(iso) {
         var days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
         if (days <= 0) return 'today';
@@ -429,27 +466,52 @@
     function cardMarkup(repo) {
         var lang = repo.language;
         var glyph = repo.name.replace(/[^a-zA-Z0-9]/g, '').slice(0, 2).toUpperCase() || 'PB';
-        var updated = relativeDate(repo.pushed_at);
+
+        // Fetched repos are stamped with how long ago they were pushed;
+        // manual entries carry a fixed note instead, since a hand-written
+        // date is exactly the kind of thing that quietly goes out of date.
+        var stamp = repo.manual
+            ? '<span class="chip-mono">' + icon('globe') + esc(repo.note) + '</span>'
+            : '<span class="chip-mono">' + icon('clock') + esc(relativeDate(repo.pushed_at)) + '</span>';
+
+        var flag = '';
+        if (repo.manual && repo.badge) {
+            flag = '<span class="chip-mono">' + icon('users') + esc(repo.badge) + '</span>';
+        } else if (!repo.manual && repo.stargazers_count > 0) {
+            flag = '<span class="chip-mono">' + icon('star') + esc(repo.stargazers_count) + '</span>';
+        }
+
+        // A real cover image replaces the initials, and takes the engineering
+        // grid overlay off with it — the pattern sitting on top of artwork
+        // reads as a screen door rather than as texture.
+        var shot = repo.cover
+            ? '<img class="card-shot" src="' + esc(repo.cover) + '" alt="" ' +
+              'loading="lazy" decoding="async" width="1200" height="801">'
+            : '';
+        var initials = repo.cover
+            ? ''
+            : '<span class="card-glyph">' + esc(glyph) + '</span>';
 
         return '' +
             '<article class="card reveal" data-lang="' + esc(lang || 'Other') + '">' +
               '<div class="card-tilt">' +
-                '<div class="card-cover">' +
+                '<div class="card-cover' + (repo.cover ? ' has-shot' : '') + '">' +
+                  // The artwork is a backdrop, so it comes first. The language
+                  // and meta chips are absolutely positioned too, and with no
+                  // z-index between them paint order is DOM order — put the
+                  // image last and it covers the very chips it sits behind.
+                  shot +
                   (lang
                     ? '<span class="card-lang" style="--lang-color:' + esc(langColour(lang)) + '"><i></i>' + esc(lang) + '</span>'
                     : '') +
-                  '<span class="card-meta">' +
-                    (repo.stargazers_count > 0
-                      ? '<span class="chip-mono">' + icon('star') + esc(repo.stargazers_count) + '</span>'
-                      : '') +
-                  '</span>' +
-                  '<span class="card-glyph">' + esc(glyph) + '</span>' +
+                  '<span class="card-meta">' + flag + '</span>' +
+                  initials +
                 '</div>' +
                 '<div class="card-body">' +
                   '<h3>' + esc(repo.name) + '</h3>' +
                   '<p class="card-desc">' + esc(repo.description || 'No description yet.') + '</p>' +
                   '<div class="card-foot">' +
-                    '<span class="chip-mono">' + icon('clock') + esc(updated) + '</span>' +
+                    stamp +
                     '<span class="spacer"></span>' +
                     '<button class="card-open" type="button" data-repo="' + esc(repo.name) + '">' +
                       'Details' + icon('arrow-right') +
@@ -512,7 +574,7 @@
         var grid = $('#projectGrid');
         if (!grid) return;
 
-        allRepos = data.repos
+        var fetched = data.repos
             .filter(function (r) { return !r.fork && !r.archived; })
             .sort(function (a, b) {
                 if (b.stargazers_count !== a.stargazers_count) {
@@ -520,6 +582,8 @@
                 }
                 return b.pushed_at.localeCompare(a.pushed_at);
             });
+
+        allRepos = MANUAL_PROJECTS.concat(fetched);
 
         renderFilters(allRepos);
         paintProjects(allRepos);
@@ -529,12 +593,23 @@
         var grid = $('#projectGrid');
         if (!grid) return;
         var rateLimited = err && err.status === 403;
+
+        // The manual entries don't come from the API, so a dead API is no
+        // reason to hide them — only the fetched repos are actually missing.
+        allRepos = MANUAL_PROJECTS.slice();
+
         grid.innerHTML = '<p class="notice">' +
             (rateLimited
                 ? 'GitHub’s API rate limit is hit for your network, so the live project list can’t load right now. '
                 : 'Couldn’t reach the GitHub API just now. ') +
             'The repositories are all at <a href="https://github.com/' + GH_USER + '" target="_blank" rel="noopener noreferrer">github.com/' + GH_USER + '</a>.' +
-            '</p>';
+            '</p>' + allRepos.map(cardMarkup).join('');
+
+        $$('.card', grid).forEach(function (card) {
+            bindTilt(card);
+            observeReveal(card);
+        });
+
         var filters = $('#projectFilters');
         if (filters) filters.hidden = true;
     }
@@ -548,9 +623,10 @@
         lastFocused = document.activeElement;
 
         $('#modalTitle').textContent = repo.name;
-        $('#modalDesc').textContent = repo.description || 'No description provided for this repository.';
+        $('#modalDesc').textContent = repo.modalDesc || repo.description ||
+            'No description provided for this repository.';
 
-        var facts = [
+        var facts = repo.facts || [
             { label: 'Language', value: repo.language || '—' },
             { label: 'Stars', value: repo.stargazers_count },
             { label: 'Last push', value: relativeDate(repo.pushed_at) },
@@ -560,13 +636,25 @@
             return '<div><span>' + esc(f.label) + '</span><b>' + esc(f.value) + '</b></div>';
         }).join('');
 
-        var actions = ['<a class="btn btn-primary" href="' + esc(repo.html_url) +
-            '" target="_blank" rel="noopener noreferrer">' + icon('github') + 'View source</a>'];
+        // A private repo has no source link to offer, so the live site is
+        // promoted rather than sitting behind a "View source" that 404s.
+        var actions = [];
+        if (repo.html_url) {
+            actions.push('<a class="btn btn-primary" href="' + esc(repo.html_url) +
+                '" target="_blank" rel="noopener noreferrer">' + icon('github') + 'View source</a>');
+        }
         if (repo.homepage) {
-            actions.push('<a class="btn btn-ghost" href="' + esc(repo.homepage) +
+            actions.push('<a class="btn ' + (repo.html_url ? 'btn-ghost' : 'btn-primary') +
+                '" href="' + esc(repo.homepage) +
                 '" target="_blank" rel="noopener noreferrer">' + icon('external') + 'Live site</a>');
         }
         $('#modalActions').innerHTML = actions.join('');
+
+        var credit = $('#modalCredit');
+        if (credit) {
+            credit.textContent = repo.credit || '';
+            credit.hidden = !repo.credit;
+        }
 
         modal.classList.add('open');
         document.body.classList.add('no-scroll');
