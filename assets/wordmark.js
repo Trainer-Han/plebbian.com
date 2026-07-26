@@ -254,16 +254,25 @@
             });
         });
 
-        /* ---- beat 2: "Pleb AI" — the pair drifts in from the right ---- */
+        /* ---- beat 2: "Pleb AI" — the pair drifts in from the right ----
+           Both letters carry the same distance and the same timing, so the
+           pair reads as the word "AI" arriving rather than an "A" that the
+           "I" then chases in after.
+
+           The distance is in ems. It used to be a flat 320px and 430px, and
+           the hero is clamp(46px, 9vw, 104px) — so on a phone the pair flew
+           roughly seven letter-heights across the screen where a desktop saw
+           three. */
         at(720, function () {
             slotSpace.style.width = gap + 'px';
+            var travel = parseFloat(getComputedStyle(root).fontSize) * 3.1;
 
             [[ai1, W.A], [ai2, W.I]].forEach(function (pair, i) {
                 var g = pair[0];
                 g.classList.add('lit');
                 g.style.transition = 'none';
                 g.style.width = pair[1] + 'px';
-                g.style.transform = 'translateX(' + (320 + i * 110) + 'px)';
+                g.style.transform = 'translateX(' + travel + 'px)';
                 g.style.opacity = '0';
 
                 // Built after the width is set, so the overlay is sized to the
@@ -274,9 +283,10 @@
                 if (snake) snake.style.animationDelay = (i * -1.1) + 's, ' + (i * -1.7) + 's';
 
                 at(30, function () {
+                    // No per-letter delay: they travel and fade as one.
                     g.style.transition =
-                        'transform 1.24s cubic-bezier(0.33, 0, 0.2, 1) ' + (i * 0.12) + 's,' +
-                        'opacity 0.85s ease ' + (i * 0.12) + 's';
+                        'transform 1.24s cubic-bezier(0.33, 0, 0.2, 1),' +
+                        'opacity 0.85s ease';
                     g.style.transform = 'none';
                     g.style.opacity = '1';
                 });
@@ -402,7 +412,11 @@
             // content box and clips the "a" tail for the rest of the sequence.
             // Width, padding and margin all change in this one frame, so the
             // glyph does not visibly move.
-            var padAllow = parseFloat(getComputedStyle(root).fontSize) * 0.16;
+            // The settled rule pads 0.08em on EACH side, so the border-box
+            // width has to grow by twice that; the box itself only moves by
+            // one side's worth.
+            var padSide = parseFloat(getComputedStyle(root).fontSize) * 0.08;
+            var padAllow = padSide * 2;
             // Read the width from the character each slot actually holds. The
             // swap exchanges the slots' ORDER, not their contents, so after it
             // ai1 holds "a" and ai2 holds "i" — assuming otherwise gave each
@@ -412,6 +426,15 @@
             [ai1, ai2].forEach(function (g) {
                 g.style.transition = 'none';
                 g.style.width = (W[g.dataset.char] + padAllow) + 'px';
+
+                // The negative margin drags the whole slot — and with it the
+                // absolutely positioned overlay — one padSide to the left,
+                // while the matching padding keeps the glyph itself put. Left
+                // uncorrected the white overlay spends its entire half-second
+                // fade sitting a visible 8px adrift of the gradient letter it
+                // is handing over to, which reads as a doubled, smeared "ia".
+                var svg = g.querySelector('.ai-svg');
+                if (svg) svg.style.transform = 'translateX(' + padSide + 'px)';
             });
 
             root.classList.add('settled');

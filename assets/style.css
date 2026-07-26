@@ -1133,6 +1133,116 @@ kbd {
 }
 
 /* --------------------------------------------------------------------------
+   Featured project — one hand-authored block, sitting above the live grid.
+   -------------------------------------------------------------------------- */
+.feature {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 0;
+    border-radius: var(--radius-xl);
+    background: var(--surface);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    backdrop-filter: blur(16px) saturate(150%);
+    border: 1px solid var(--line);
+    overflow: hidden;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature:hover {
+    border-color: var(--line-strong);
+    box-shadow: var(--shadow-lg);
+}
+
+/* The render carries its own black backdrop and lighting, so it fills the
+   panel edge to edge instead of floating on a gradient of ours. That also
+   keeps it identical in both themes, which is right for a brand mark. */
+.feature-visual {
+    position: relative;
+    min-height: 260px;
+    border-right: 1px solid var(--line);
+    overflow: hidden;
+    /* Matches the artwork's own background, so any rounding gap at the
+       panel's corners is invisible rather than a pale sliver. */
+    background: #0b0d14;
+}
+
+.feature-visual img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.feature-body {
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+}
+
+.feature-lead {
+    font-size: 17px;
+    color: var(--text-dim);
+}
+
+.feature-body p + p {
+    margin-top: 14px;
+    font-size: 16px;
+    color: var(--text-muted);
+}
+
+.feature-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-top: 26px;
+    padding: 20px 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+}
+
+.feature-metrics b {
+    display: block;
+    font-family: var(--font-display);
+    font-size: clamp(24px, 2.6vw, 32px);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    color: var(--text-bright);
+}
+
+.feature-metrics span {
+    display: block;
+    margin-top: 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.feature .tag-row { padding-top: 22px; }
+
+.feature-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px 18px;
+    margin-top: 26px;
+}
+
+.feature-note {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.feature-note .i { width: 14px; height: 14px; flex-shrink: 0; }
+
+/* --------------------------------------------------------------------------
    Projects
    -------------------------------------------------------------------------- */
 .filters {
@@ -1222,6 +1332,20 @@ kbd {
         linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
     background-size: 28px 28px;
 }
+
+/* Cover artwork, in place of the initials. The grid overlay is suppressed
+   alongside it — a repeating pattern laid over a real image reads as a screen
+   door rather than as texture. */
+.card-shot {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.card-cover.has-shot { background: #0b0d14; }
+.card-cover.has-shot::after { content: none; }
 
 .card-glyph {
     position: relative;
@@ -1355,6 +1479,10 @@ kbd {
 
 .notice a { color: var(--blue); }
 
+/* Inside the project grid the notice sits alongside cards, so it has to
+   span every column rather than taking a single card's slot. */
+.projects .notice { grid-column: 1 / -1; }
+
 /* --------------------------------------------------------------------------
    Project modal
    -------------------------------------------------------------------------- */
@@ -1436,6 +1564,18 @@ kbd {
     gap: 12px;
     margin-top: 26px;
 }
+
+/* Co-authorship credit — only rendered for projects that declare one. */
+.modal-credit {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.modal-credit[hidden] { display: none; }
 
 /* --------------------------------------------------------------------------
    Skills marquee — one row, slower, pauses on hover/focus
@@ -1623,6 +1763,16 @@ footer a:hover { color: var(--text-bright); }
     .nav-links-spacer { margin-left: auto; }
 }
 
+@media (max-width: 900px) {
+    /* Side by side, the logo panel gets too narrow to read as a brand mark. */
+    .feature { grid-template-columns: 1fr; }
+    .feature-visual {
+        min-height: 220px;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+    }
+}
+
 @media (max-width: 768px) {
     section { padding: 86px 20px; }
     .hero { padding: 138px 20px 86px; min-height: auto; }
@@ -1632,6 +1782,7 @@ footer a:hover { color: var(--text-bright); }
     .cell { padding: 24px; }
     .contact { padding: 56px 22px; }
     .modal-box { padding: 26px; max-height: 88vh; }
+    .feature-body { padding: 28px 24px; }
 }
 
 @media (max-width: 560px) {
@@ -1639,6 +1790,9 @@ footer a:hover { color: var(--text-bright); }
     .hero-actions .btn,
     .contact-actions .btn { width: 100%; }
     .stat-strip { grid-template-columns: repeat(2, 1fr); }
+    /* Four metrics across becomes unreadably narrow on a phone. */
+    .feature-metrics { grid-template-columns: repeat(2, 1fr); gap: 18px 14px; }
+    .feature-actions .btn { width: 100%; }
 }
 
 /* --------------------------------------------------------------------------
