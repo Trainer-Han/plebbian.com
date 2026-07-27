@@ -18,7 +18,7 @@ const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
 const PORT = 8099;
-const PAGES = ['index.html', 'portfolio.html', '404.html'];
+const PAGES = ['index.html', 'portfolio.html', 'demos.html', '404.html'];
 
 const MIME = {
     '.html': 'text/html; charset=utf-8',
