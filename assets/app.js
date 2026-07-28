@@ -366,6 +366,37 @@
                 { label: 'Source', value: 'Private' }
             ],
             credit: 'Built with Louis (lode787).'
+        },
+        {
+            name: 'Deco Designs',
+            description: 'WooCommerce rebuild for an authorised Brother sewing and ' +
+                'embroidery dealership — bespoke theme, a 55-product catalogue ' +
+                'recovered from archive captures, and service-enquiry and coupon flows.',
+            language: 'PHP',
+            homepage: 'https://demo.plebbian.com/',
+            homepageLabel: 'Open the demo',
+            manual: true,
+            cover: 'assets/decodesigns-cover.webp',
+            // The demo host sits behind HTTP Basic auth, so say so before the
+            // click rather than after it.
+            note: 'Password-protected demo',
+            badge: 'Client work',
+            modalDesc: 'A full rebuild of a South African Brother sewing and embroidery ' +
+                'dealership\'s shop on WordPress and WooCommerce. Bespoke "Atelier" ' +
+                'theme over a mu-plugin split one file per concern — store config, ' +
+                'taxonomy, policy pages, payment wiring, service and repair enquiries, ' +
+                'welcome coupons, review automation and redirects. The previous site ' +
+                'had already gone offline, so the 55-product catalogue was rebuilt from ' +
+                'archive captures with the old slugs kept intact for SEO continuity. ' +
+                'Runs on a Docker Compose environment that provisions itself from ' +
+                'scratch. The demo is password protected, one password per client.',
+            facts: [
+                { label: 'Platform', value: 'WordPress · WooCommerce' },
+                { label: 'Catalogue', value: '55 products · 9 categories' },
+                { label: 'Dev env', value: 'Docker Compose' },
+                { label: 'Source', value: 'Private' }
+            ],
+            credit: 'Client project · the demo needs the password you were sent.'
         }
     ];
 
@@ -644,9 +675,12 @@
                 '" target="_blank" rel="noopener noreferrer">' + icon('github') + 'View source</a>');
         }
         if (repo.homepage) {
+            // Not everything linked here is a public live site — a demo behind a
+            // password should not be labelled as one.
             actions.push('<a class="btn ' + (repo.html_url ? 'btn-ghost' : 'btn-primary') +
                 '" href="' + esc(repo.homepage) +
-                '" target="_blank" rel="noopener noreferrer">' + icon('external') + 'Live site</a>');
+                '" target="_blank" rel="noopener noreferrer">' + icon('external') +
+                esc(repo.homepageLabel || 'Live site') + '</a>');
         }
         $('#modalActions').innerHTML = actions.join('');
 

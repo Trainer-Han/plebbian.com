@@ -28,6 +28,7 @@ const REQUIRED_ASSETS = [
     'assets/apple-touch-icon.png',
     'assets/og-image.png',
     'assets/syntaxx-hero.webp',
+    'assets/decodesigns-cover.webp',
     'assets/fonts/archivo-latin-var.woff2',
     'assets/fonts/space-grotesk-latin-var.woff2',
     'assets/fonts/LICENSE.md',
