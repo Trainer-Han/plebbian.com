@@ -370,8 +370,9 @@
         {
             name: 'Deco Designs',
             description: 'WooCommerce rebuild for an authorised Brother sewing and ' +
-                'embroidery dealership — bespoke theme, a 55-product catalogue ' +
-                'recovered from archive captures, and service-enquiry and coupon flows.',
+                'embroidery dealership — bespoke theme, an 89-product catalogue ' +
+                'rebuilt after the old site went offline, and service-enquiry and ' +
+                'coupon flows.',
             language: 'PHP',
             homepage: 'https://demo.plebbian.com/',
             homepageLabel: 'Open the demo',
@@ -386,13 +387,14 @@
                 'theme over a mu-plugin split one file per concern — store config, ' +
                 'taxonomy, policy pages, payment wiring, service and repair enquiries, ' +
                 'welcome coupons, review automation and redirects. The previous site ' +
-                'had already gone offline, so the 55-product catalogue was rebuilt from ' +
-                'archive captures with the old slugs kept intact for SEO continuity. ' +
+                'had already gone offline, so the catalogue was rebuilt from ' +
+                'archive captures with the old slugs kept intact for SEO continuity, ' +
+                'and has grown to 89 since. ' +
                 'Runs on a Docker Compose environment that provisions itself from ' +
                 'scratch. The demo is password protected, one password per client.',
             facts: [
                 { label: 'Platform', value: 'WordPress · WooCommerce' },
-                { label: 'Catalogue', value: '55 products · 9 categories' },
+                { label: 'Catalogue', value: '89 products' },
                 { label: 'Dev env', value: 'Docker Compose' },
                 { label: 'Source', value: 'Private' }
             ],
