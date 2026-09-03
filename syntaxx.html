@@ -245,11 +245,11 @@
                 <p class="hero-tagline">A Discord bot, and the desk it was run from.</p>
 
                 <p class="hero-copy">
-                    Thirty-nine days, ninety-four commits, two developers. A moderation
-                    bot running across community servers, and a desktop dashboard built
-                    to support them without ever holding a server hostage. It is still
-                    out there, still running — I am simply no longer the one shipping to
-                    it. This page is my half, written down while it is still fresh.
+                    My bot. A moderation stack running across community servers, and
+                    the desktop dashboard I built to support the people running them
+                    without ever holding a server hostage. It is still out there, still
+                    running — I am simply no longer the one shipping to it. This page is
+                    my half, written down while it is still fresh.
                 </p>
 
                 <div class="hero-actions">
@@ -285,10 +285,10 @@
                 </div>
 
                 <ul class="ledger reveal">
-                    <li><b>My stretch</b><span>13 July 2026 to 20 August 2026 — thirty-nine days, ninety-four commits.</span></li>
-                    <li><b>The bot</b><span>25,482 lines of Node — discord.js, MongoDB, pm2 on a VPS.</span></li>
-                    <li><b>The desk</b><span>15,281 lines of Python — a PySide6 desktop dashboard, twelve windows, ten custom widgets.</span></li>
-                    <li><b>Built by</b><span>Two of us. Louis (lode787) and me.</span></li>
+                    <li><b>The bot</b><span>25,482 lines of Node — discord.js, MongoDB, pm2 on a VPS. Mine, and older than the repository these counts come from.</span></li>
+                    <li><b>The desk</b><span>15,281 lines of Python — a PySide6 desktop dashboard, twelve windows, ten custom widgets. Mine too, built in the last stretch.</span></li>
+                    <li><b>Last stretch</b><span>13 July to 20 August 2026 — thirty-nine days, ninety-four commits. The window this repository covers, not the life of the bot.</span></li>
+                    <li><b>Alongside</b><span>Louis (lode787), through that stretch.</span></li>
                 </ul>
             </div>
         </section>
@@ -298,7 +298,7 @@
             <div class="wrap">
                 <div class="section-head reveal">
                     <span class="eyebrow">The build</span>
-                    <h2>Six systems, <span class="muted">not one bot.</span></h2>
+                    <h2>Ten systems, <span class="muted">not one bot.</span></h2>
                     <p>
                         Described as they stood at my last commit. Every one had per-guild
                         configuration, its own permission model, and a way to be turned off
@@ -307,18 +307,74 @@
                 </div>
 
                 <div class="bento reveal">
+                    <div class="cell cell-full">
+                        <span class="cell-icon"><svg class="i" aria-hidden="true"><use href="#i-x"></use></svg></span>
+                        <h3>Anti-scam and anti-raid</h3>
+                        <p>
+                            The part I would keep if I could only keep one. A trap channel
+                            that catches compromised accounts before they finish spraying
+                            links. A scam-server action that blacklists the guild and its
+                            owner, bans that owner across the other servers the bot is in,
+                            and then leaves quietly — deliberately <em>not</em> a nuke, because
+                            in a scam server the members are the victims, and it stays
+                            reversible. Raid spam is caught at five messages in three seconds
+                            and answered with an hour’s timeout, with per-guild exception
+                            lists for users, roles and channels. Alongside those: a global
+                            blacklist, an attachment-flood guard, slur logging, and an
+                            AI-likelihood check that scores both text and images through two
+                            separate providers.
+                        </p>
+                    </div>
+
                     <div class="cell cell-half">
                         <span class="cell-icon"><svg class="i" aria-hidden="true"><use href="#i-star"></use></svg></span>
-                        <h3>Moderation and automod</h3>
+                        <h3>Moderation core</h3>
                         <p>
-                            Warns, infractions, timeouts, kicks and mutes, all landing on one
-                            infraction record that pages by severity. Moderators earned points
-                            on a weighted scale, tracked weekly, logged to a channel.
+                            Warns, cases, timeouts, kicks, mutes and purges, all landing on
+                            one infraction record that pages by severity. Message, mod and
+                            member logging to separate channels. Moderators earned points on
+                            a weighted scale — a warn is worth less than a kick — tracked
+                            weekly and posted to a log.
+                        </p>
+                    </div>
+
+                    <div class="cell cell-half">
+                        <span class="cell-icon"><svg class="i" aria-hidden="true"><use href="#i-replay"></use></svg></span>
+                        <h3>Softban: quarantine, not exile</h3>
+                        <p>
+                            Strips a member’s roles, <em>saves</em> them, and isolates them in
+                            a lobby rather than removing them from the server. An appeal
+                            channel opens once they are eligible. Leaving and rejoining does
+                            not escape it, and deleting the lobby channel does not break it.
+                            Lifting it hands back exactly the roles they had.
                         </p>
                     </div>
 
                     <div class="cell cell-half">
                         <span class="cell-icon"><svg class="i" aria-hidden="true"><use href="#i-users"></use></svg></span>
+                        <h3>IP verification</h3>
+                        <p>
+                            A verification gate that hands out a role, and optionally refuses
+                            accounts sharing an address with an already-verified member. The
+                            address itself is never stored — only a SHA-256 hash, unique per
+                            guild, so one server’s records say nothing about another’s.
+                        </p>
+                    </div>
+
+                    <div class="cell cell-half">
+                        <span class="cell-icon"><svg class="i" aria-hidden="true"><use href="#i-search"></use></svg></span>
+                        <h3>Alt detection</h3>
+                        <p>
+                            Scores every member against a target across four string-similarity
+                            algorithms, with homoglyph and leet normalisation, account age and
+                            join proximity, avatar and banner matches, and shared roles —
+                            weighted so a role most of the server already holds counts for
+                            nothing.
+                        </p>
+                    </div>
+
+                    <div class="cell cell-half">
+                        <span class="cell-icon"><svg class="i" aria-hidden="true"><use href="#i-discord"></use></svg></span>
                         <h3>Join-to-create voice</h3>
                         <p>
                             Joining one channel spawned a private VC with an owner control
@@ -335,41 +391,52 @@
                             Text relayed live between two servers, or three in a “mashup”.
                             Server names were never shown — participants got anonymous colour
                             labels — and every relayed message passed the word filter whatever
-                            the sending guild had toggled off.
-                        </p>
-                    </div>
-
-                    <div class="cell cell-half">
-                        <span class="cell-icon"><svg class="i" aria-hidden="true"><use href="#i-search"></use></svg></span>
-                        <h3>Alt detection</h3>
-                        <p>
-                            Scored every member against a target across four string-similarity
-                            algorithms, with homoglyph and leet normalisation, account age and
-                            join proximity, avatar and banner matches, and shared roles —
-                            weighted so a role most of the server already holds counts for
-                            nothing.
-                        </p>
-                    </div>
-
-                    <div class="cell cell-half">
-                        <span class="cell-icon"><svg class="i" aria-hidden="true"><use href="#i-terminal"></use></svg></span>
-                        <h3>The dashboard</h3>
-                        <p>
-                            A PySide6 desktop app sharing the bot’s database: server settings,
-                            insights, a control panel, per-file deploys. It could only touch a
-                            server after that server’s owner granted consent over DM — and every
-                            change was written to a log the owner received when access ended.
+                            the sending guild had toggled off. Abuse was traceable and
+                            timeout-able from either end.
                         </p>
                     </div>
 
                     <div class="cell cell-half">
                         <span class="cell-icon"><svg class="i" aria-hidden="true"><use href="#i-sparkles"></use></svg></span>
-                        <h3>The Command Visualiser</h3>
+                        <h3>Levelling and economy</h3>
                         <p>
-                            A generated, self-contained page for reading every command the bot
-                            registered before touching production — options, subcommands, the
-                            replies each branch could send, and the commands that silently do
-                            nothing when run from the wrong account.
+                            XP with generated rank cards and per-guild styling, global and
+                            per-server leaderboards, a wallet, and a casino behind its own
+                            channel gate — blackjack, roulette, slots, mines, steal, and a
+                            chip leaderboard.
+                        </p>
+                    </div>
+
+                    <div class="cell cell-half">
+                        <span class="cell-icon"><svg class="i" aria-hidden="true"><use href="#i-menu"></use></svg></span>
+                        <h3>And the long tail</h3>
+                        <p>
+                            Music with a queue, automod, custom commands, applications and
+                            staff evaluation, a partner system with quotas, welcome and leave
+                            messages, colour roles, verification-free utilities — AFK, QR,
+                            background removal, sticker and emoji lifting, timers, a cipher —
+                            and RSS listeners posting car news into channels that asked for it.
+                        </p>
+                    </div>
+
+                    <div class="cell cell-full">
+                        <span class="cell-icon"><svg class="i" aria-hidden="true"><use href="#i-terminal"></use></svg></span>
+                        <h3>The dashboard — remote support without a backdoor</h3>
+                        <p>
+                            A PySide6 desktop app, about 15,000 lines, sharing the bot’s
+                            database: server settings, insights, a control panel, bot presence
+                            and MOTD, per-file deploys. The problem it solves is ordinary and
+                            the answer is the interesting part — a server owner needs help,
+                            and helping them means reaching into their server.
+                        </p>
+                        <p>
+                            So it cannot. Not until that server’s owner is asked over DM and
+                            presses approve, on a request only its owner or an administrator
+                            can answer — being a bot developer grants nothing, because a
+                            developer with no standing in that server is not an approver.
+                            Every change made under a grant is appended to that grant’s own
+                            log, and the owner is sent the whole log when access ends. Support
+                            access you can read afterwards is support access you can trust.
                         </p>
                     </div>
                 </div>
@@ -498,11 +565,15 @@
             <div class="wrap">
                 <div class="section-head reveal">
                     <span class="eyebrow">Operations</span>
-                    <h2>How it actually reached the server.</h2>
+                    <h2>The tooling <span class="muted">nobody using it ever saw.</span></h2>
+                    <p>
+                        Neither of these is a feature. They are the two internal things that
+                        made shipping to a live bot survivable.
+                    </p>
                 </div>
 
                 <div class="bento reveal">
-                    <div class="cell cell-wide">
+                    <div class="cell cell-half">
                         <h3>Two deploy routes that agreed byte for byte</h3>
                         <p>
                             A GitHub Actions workflow shipped the last pushed commit and
@@ -517,9 +588,19 @@
                         </p>
                     </div>
 
-                    <div class="cell cell-narrow cell-metric">
-                        <b>2</b>
-                        <span>Routes, one contract</span>
+                    <div class="cell cell-half">
+                        <h3>The Command Visualiser</h3>
+                        <p>
+                            Internal only — no user ever saw this. A generated, self-contained
+                            page that read every command file the bot would register and laid
+                            out its options, subcommands, and the replies each branch could
+                            send, so a command could be reviewed before production rather than
+                            after. It flagged the ones that fail <em>silently</em> from the
+                            wrong account, which is the worst way for a command to be broken,
+                            and listed the files that would not load at all — separating the
+                            ones genuinely broken from the ones merely missing a package on
+                            this laptop.
+                        </p>
                     </div>
                 </div>
             </div>
