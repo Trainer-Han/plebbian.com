@@ -413,6 +413,7 @@
             // requires an application to publish.
             homepageLabel: 'What it does',
             manual: true,
+            cover: 'assets/bimmerlink-cover.webp',
             note: 'bimmerlink.plebbian.com',
             badge: 'Community tool',
             modalDesc: 'A bridge between a Minecraft Paper server and a Discord guild, ' +
@@ -439,6 +440,17 @@
        the bot, not the bot — left in the fetched list it would sit beside the
        real entry as a second card with the same name and a thinner story. */
     var SUPERSEDED_REPOS = ['BimmerLink'];
+
+    /* Cover art for fetched repos, keyed by repo name.
+       A card with no cover falls back to two initials in a box, which reads as
+       a placeholder rather than as a project. These are screenshots of the
+       things themselves, so they cannot flatter the work: if the site changes,
+       retake them. Repos with no cover here still fall back, deliberately —
+       an invented image would be worse than initials. */
+    var REPO_COVERS = {
+        'plebbian.com': 'assets/plebbian-cover.webp',
+        'syntaxx.lol-web': 'assets/syntaxx-web-cover.webp'
+    };
 
     function relativeDate(iso) {
         var days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
@@ -655,6 +667,10 @@
                 }
                 return b.pushed_at.localeCompare(a.pushed_at);
             });
+
+        fetched.forEach(function (r) {
+            if (REPO_COVERS[r.name]) r.cover = REPO_COVERS[r.name];
+        });
 
         allRepos = MANUAL_PROJECTS.concat(fetched);
 
