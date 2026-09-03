@@ -18,7 +18,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
-const PAGES = ['index.html', 'portfolio.html', 'demos.html', '404.html'];
+const PAGES = ['index.html', 'portfolio.html', 'syntaxx.html', 'demos.html', '404.html'];
 const SOURCES = ['assets/style.css', 'assets/app.js', 'assets/wordmark.js'];
 const REQUIRED_ASSETS = [
     'assets/style.css',
@@ -29,6 +29,9 @@ const REQUIRED_ASSETS = [
     'assets/og-image.png',
     'assets/syntaxx-hero.webp',
     'assets/decodesigns-cover.webp',
+    'assets/bimmerlink-cover.webp',
+    'assets/plebbian-cover.webp',
+    'assets/syntaxx-web-cover.webp',
     'assets/fonts/archivo-latin-var.woff2',
     'assets/fonts/space-grotesk-latin-var.woff2',
     'assets/fonts/LICENSE.md',

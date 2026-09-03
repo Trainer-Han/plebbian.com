@@ -399,8 +399,58 @@
                 { label: 'Source', value: 'Private' }
             ],
             credit: 'Client project · the demo needs the password you were sent.'
+        },
+        {
+            name: 'BimmerLink',
+            description: 'Discord bot bridging a Minecraft server and a Discord guild — ' +
+                'chat relayed both ways, console piped to an admin channel, and ' +
+                'Discord roles driving whitelist and permissions once a player links ' +
+                'their accounts.',
+            language: 'JavaScript',
+            homepage: 'https://bimmerlink.plebbian.com/',
+            // Not a live site: the bot has no web app. The subdomain carries what
+            // a reader actually wants — what it does, and the two policies Discord
+            // requires an application to publish.
+            homepageLabel: 'What it does',
+            manual: true,
+            cover: 'assets/bimmerlink-cover.webp',
+            note: 'bimmerlink.plebbian.com',
+            badge: 'Community tool',
+            modalDesc: 'A bridge between a Minecraft Paper server and a Discord guild, ' +
+                'built on the EssentialsX Discord and DiscordLink plugins. In-game chat ' +
+                'is mirrored into a configured Discord channel and messages there are ' +
+                'mirrored back, so the server stays reachable from a phone; server ' +
+                'console output goes to a channel kept for admins. Players link their ' +
+                'Minecraft and Discord accounts with a one-time code, and from then on ' +
+                'Discord roles drive in-game state — whitelist entry, permission groups ' +
+                'and ranks — so access is managed from Discord rather than by hand. ' +
+                'Linking is always started by the player: nothing about an account ' +
+                'changes until they ask for it.',
+            facts: [
+                { label: 'Language', value: 'JavaScript' },
+                { label: 'Stack', value: 'discord.js · EssentialsX' },
+                { label: 'Server', value: 'Minecraft Paper' },
+                { label: 'Source', value: 'Private' }
+            ]
         }
     ];
+
+    /* Public repos a manual entry above already speaks for.
+       github.com/Trainer-Han/BimmerLink holds screenshots and video captures of
+       the bot, not the bot — left in the fetched list it would sit beside the
+       real entry as a second card with the same name and a thinner story. */
+    var SUPERSEDED_REPOS = ['BimmerLink'];
+
+    /* Cover art for fetched repos, keyed by repo name.
+       A card with no cover falls back to two initials in a box, which reads as
+       a placeholder rather than as a project. These are screenshots of the
+       things themselves, so they cannot flatter the work: if the site changes,
+       retake them. Repos with no cover here still fall back, deliberately —
+       an invented image would be worse than initials. */
+    var REPO_COVERS = {
+        'plebbian.com': 'assets/plebbian-cover.webp',
+        'syntaxx.lol-web': 'assets/syntaxx-web-cover.webp'
+    };
 
     function relativeDate(iso) {
         var days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
@@ -608,13 +658,19 @@
         if (!grid) return;
 
         var fetched = data.repos
-            .filter(function (r) { return !r.fork && !r.archived; })
+            .filter(function (r) {
+                return !r.fork && !r.archived && SUPERSEDED_REPOS.indexOf(r.name) === -1;
+            })
             .sort(function (a, b) {
                 if (b.stargazers_count !== a.stargazers_count) {
                     return b.stargazers_count - a.stargazers_count;
                 }
                 return b.pushed_at.localeCompare(a.pushed_at);
             });
+
+        fetched.forEach(function (r) {
+            if (REPO_COVERS[r.name]) r.cover = REPO_COVERS[r.name];
+        });
 
         allRepos = MANUAL_PROJECTS.concat(fetched);
 
@@ -790,8 +846,7 @@
 
         items.push(
             { label: 'Toggle theme', action: function () { themeBtn && themeBtn.click(); }, icon: 'moon' },
-            { label: 'GitHub profile', href: 'https://github.com/' + GH_USER, icon: 'github', external: true },
-            { label: 'Email me', href: 'mailto:hello@plebbian.com', icon: 'mail', external: true }
+            { label: 'GitHub profile', href: 'https://github.com/' + GH_USER, icon: 'github', external: true }
         );
 
         function render() {

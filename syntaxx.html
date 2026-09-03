@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="syntaxx.lol — a Discord bot and its desktop dashboard. What I built over five weeks in 2026 before handing it on, and the three parts worth keeping.">
+    <meta name="author" content="Plebbian">
+    <meta name="theme-color" content="#0f172a">
+
+    <title>syntaxx.lol — Plebbian</title>
+    <link rel="canonical" href="https://plebbian.com/syntaxx.html">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="syntaxx.lol — my half of it">
+    <meta property="og:description" content="A Discord bot and its desktop dashboard. What I built over five weeks in 2026 before handing it on.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://plebbian.com/syntaxx.html">
+    <meta property="og:image" content="https://plebbian.com/assets/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="Plebbian">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="syntaxx.lol — my half of it">
+    <meta name="twitter:description" content="A Discord bot and its desktop dashboard. What I built over five weeks in 2026 before handing it on.">
+    <meta name="twitter:image" content="https://plebbian.com/assets/og-image.png">
+
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('pleb.theme');
+                if (!t) t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', t);
+            } catch (e) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        }());
+    </script>
+
+    <link rel="preload" href="assets/fonts/archivo-latin-var.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="assets/fonts/space-grotesk-latin-var.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="assets/style.css">
+
+    <style>
+        /* Page-local: this is the only long-form read on the site, so the
+           pieces it needs live here rather than in the shared design system. */
+        .archive-stamp {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            border: 1px solid var(--line-strong);
+            border-radius: 999px;
+            padding: 7px 15px;
+        }
+        .archive-stamp .i { width: 14px; height: 14px; }
+
+        .deep {
+            border-top: 1px solid var(--line);
+            padding-top: 34px;
+            margin-top: 34px;
+        }
+        .deep:first-of-type { border-top: 0; padding-top: 0; margin-top: 0; }
+
+        .deep-index {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 0.2em;
+            color: var(--text-muted);
+            margin: 0 0 10px;
+        }
+        .deep h3 {
+            font-family: var(--font-display);
+            font-size: clamp(21px, 2.4vw, 27px);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text-bright);
+            margin: 0 0 14px;
+        }
+        .deep p { color: var(--text-dim); margin: 0 0 14px; max-width: 68ch; }
+        .deep p:last-child { margin-bottom: 0; }
+        .deep code {
+            font-family: var(--font-mono);
+            font-size: 0.88em;
+            background: var(--surface-2);
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            padding: 1px 6px;
+        }
+
+        .verdict {
+            border-left: 2px solid var(--violet);
+            padding: 4px 0 4px 18px;
+            margin-top: 18px;
+        }
+        .verdict p { color: var(--text); margin: 0; }
+
+        .ledger {
+            list-style: none;
+            margin: 34px 0 0;
+            padding: 0;
+            display: grid;
+            gap: 12px;
+        }
+        .ledger li {
+            display: grid;
+            grid-template-columns: 8.5rem 1fr;
+            gap: 18px;
+            align-items: baseline;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--line);
+            color: var(--text-dim);
+        }
+        .ledger li:last-child { border-bottom: 0; padding-bottom: 0; }
+        .ledger b {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .closing {
+            max-width: 60ch;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .closing p { color: var(--text-dim); margin: 0 0 20px; }
+        .closing p:last-of-type { margin-bottom: 0; }
+        .closing .lede {
+            font-family: var(--font-display);
+            font-size: clamp(20px, 2.4vw, 26px);
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            line-height: 1.4;
+            color: var(--text-bright);
+            margin: 18px 0 24px;
+        }
+        .closing-actions { justify-content: center; margin-top: 26px; }
+
+        @media (max-width: 860px) {
+            .ledger li { grid-template-columns: 1fr; gap: 4px; }
+        }
+    </style>
+</head>
+<body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+        <symbol id="i-github" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7 0-.7 0-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.9 2.9 1.3 3.6 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-6A4.7 4.7 0 0 1 6.6 8c-.2-.3-.6-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.4 11.4 0 0 1 6 0C18.3 4.5 19.3 4.8 19.3 4.8c.7 1.7.3 2.9.1 3.2a4.7 4.7 0 0 1 1.3 3.3c0 4.6-2.8 5.6-5.5 5.9.5.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3Z"/></symbol>
+        <symbol id="i-discord" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.3698a19.7913 19.7913 0 0 0-4.8851-1.5152.0741.0741 0 0 0-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 0 0-.0785-.037 19.7363 19.7363 0 0 0-4.8852 1.515.0699.0699 0 0 0-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 0 0 .0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 0 0 .0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 0 0-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 0 1-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 0 1 .0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 0 1 .0785.0095c.1202.099.246.198.3728.2924a.077.077 0 0 1-.0066.1276 12.2986 12.2986 0 0 1-1.873.8914.0766.0766 0 0 0-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 0 0 .0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 0 0 .0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 0 0-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z"/></symbol>
+        <symbol id="i-star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8l-6.2 3.2L7 14.2l-5-4.9 6.9-1z"/></symbol>
+        <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+        <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+        <symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+        <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+        <symbol id="i-arrow-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></symbol>
+        <symbol id="i-external" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
+        <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+        <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+        <symbol id="i-replay" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></symbol>
+        <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></symbol>
+        <symbol id="i-terminal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></symbol>
+        <symbol id="i-sparkles" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></symbol>
+        <symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></symbol>
+        <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    </svg>
+
+    <div class="bg" aria-hidden="true">
+        <canvas id="dots"></canvas>
+    </div>
+
+    <div class="nav-shell" id="navShell">
+        <nav class="nav" aria-label="Main">
+            <a href="index.html" class="nav-brand"><span class="mark" aria-hidden="true"></span>Plebbian</a>
+
+            <ul class="nav-links">
+                <li><a href="index.html#top">Home</a></li>
+                <li><a href="portfolio.html#hero">Portfolio</a></li>
+                <li><a href="portfolio.html#about">About</a></li>
+                <li><a href="portfolio.html#featured">Featured</a></li>
+                <li><a href="portfolio.html#projects">Projects</a></li>
+                <li><a href="demos.html">Demos</a></li>
+                <li><a href="portfolio.html#contact">Contact</a></li>
+            </ul>
+
+            <div class="nav-tools nav-links-spacer">
+                <button class="kbd-btn" type="button" data-palette-open aria-label="Open command palette">
+                    <svg class="i" aria-hidden="true"><use href="#i-search"></use></svg>
+                    <kbd>Ctrl K</kbd>
+                </button>
+                <button class="icon-btn" id="themeToggle" type="button" aria-label="Switch theme"></button>
+                <a class="icon-btn" href="https://github.com/Trainer-Han" target="_blank" rel="noopener noreferrer" aria-label="GitHub profile">
+                    <svg class="i" aria-hidden="true"><use href="#i-github"></use></svg>
+                </a>
+                <button class="icon-btn nav-toggle" id="navToggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="navPanel">
+                    <svg class="i" aria-hidden="true"><use href="#i-menu"></use></svg>
+                </button>
+            </div>
+
+            <span class="nav-progress" id="navProgress" aria-hidden="true"></span>
+        </nav>
+
+        <div class="nav-panel" id="navPanel">
+            <a href="index.html#top">Home</a>
+            <a href="portfolio.html#hero">Portfolio</a>
+            <a href="portfolio.html#about">About</a>
+            <a href="portfolio.html#featured">Featured</a>
+            <a href="portfolio.html#projects">Projects</a>
+            <a href="demos.html">Demos</a>
+            <a href="portfolio.html#skills">Skills</a>
+            <a href="portfolio.html#contact">Contact</a>
+            <a href="https://discord.gg/plebbian" target="_blank" rel="noopener noreferrer">Join Discord</a>
+        </div>
+    </div>
+
+    <div class="palette" id="palette" role="dialog" aria-modal="true" aria-label="Command palette">
+        <div class="palette-box">
+            <div class="palette-input-row">
+                <svg class="i" aria-hidden="true"><use href="#i-search"></use></svg>
+                <input id="paletteInput" type="text" placeholder="Jump to…" autocomplete="off" spellcheck="false" aria-label="Search commands">
+                <kbd>Esc</kbd>
+            </div>
+            <ul class="palette-list" id="paletteList" role="listbox" aria-label="Commands"></ul>
+        </div>
+    </div>
+
+    <main id="main">
+        <!-- ========================= Hero ========================= -->
+        <section class="hero" id="top">
+            <div class="wrap hero-inner">
+                <span class="archive-stamp">
+                    <svg class="i" aria-hidden="true"><use href="#i-clock"></use></svg>
+                    My part ended September 2026
+                </span>
+
+                <h1>syntaxx.lol</h1>
+                <p class="hero-tagline">A Discord bot, and the desk it was run from.</p>
+
+                <p class="hero-copy">
+                    A co-developed moderation stack running across community servers,
+                    and the desktop dashboard built to support the people running them
+                    without ever holding a server hostage. It is still out there, still
+                    running — I am simply no longer the one shipping to it. This page is
+                    my half, written down while it is still fresh.
+                </p>
+
+                <div class="hero-actions">
+                    <a href="#build" class="btn btn-primary">
+                        What it did
+                        <svg class="i" aria-hidden="true"><use href="#i-arrow-right"></use></svg>
+                    </a>
+                    <a href="portfolio.html#featured" class="btn btn-ghost">
+                        Back to the portfolio
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- ======================== Numbers ======================== -->
+        <section id="numbers">
+            <div class="wrap">
+                <div class="section-head reveal">
+                    <span class="eyebrow">Where I left it</span>
+                    <h2>The handover state, <span class="muted">to the line.</span></h2>
+                    <p>
+                        Counted from my last commit rather than from memory. It has kept
+                        moving since, so these are my numbers, not today’s. The bot is
+                        Node; the dashboard is Python.
+                    </p>
+                </div>
+
+                <div class="feature-metrics reveal">
+                    <div><b>40,763</b><span>Lines of code</span></div>
+                    <div><b>157</b><span>Commands</span></div>
+                    <div><b>63</b><span>Event handlers</span></div>
+                    <div><b>60</b><span>Data models</span></div>
+                </div>
+
+                <ul class="ledger reveal">
+                    <li><b>The bot</b><span>25,482 lines of Node — discord.js, MongoDB, pm2 on a VPS. Older than the repository these counts come from.</span></li>
+                    <li><b>The desk</b><span>15,281 lines of Python — a PySide6 desktop dashboard, twelve windows, ten custom widgets, built inside the last stretch.</span></li>
+                    <li><b>Last stretch</b><span>13 July to 20 August 2026 — thirty-nine days, ninety-four commits. The window this repository covers, not the life of the bot.</span></li>
+                    <li><b>Built by</b><span>Co-developed with Louis (lode787).</span></li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- ========================= Build ========================= -->
+        <section id="build">
+            <div class="wrap">
+                <div class="section-head reveal">
+                    <span class="eyebrow">The build</span>
+                    <h2>Ten systems, <span class="muted">not one bot.</span></h2>
+                    <p>
+                        Described as they stood at my last commit. Every one had per-guild
+                        configuration, its own permission model, and a way to be turned off
+                        by the server that hosted it.
+                    </p>
+                </div>
+
+                <div class="bento reveal">
+                    <div class="cell cell-full">
+                        <span class="cell-icon"><svg class="i" aria-hidden="true"><use href="#i-x"></use></svg></span>
+                        <h3>Anti-scam and anti-raid</h3>
+                        <p>
+                            The part I would keep if I could only keep one. A trap channel
+                            that catches compromised accounts before they finish spraying
+                            links. A scam-server action that blacklists the guild and its
+                            owner, bans that owner across the other servers the bot is in,
+                            and then leaves quietly — deliberately <em>not</em> a nuke, because
+                            in a scam server the members are the victims, and it stays
+                            reversible. Raid spam is caught at five messages in three seconds
+                            and answered with an hour’s timeout, with per-guild exception
+                            lists for users, roles and channels. Alongside those: a global
+                            blacklist, an attachment-flood guard, slur logging, and an
+                            AI-likelihood check that scores both text and images through two
+                            separate providers.
+                        </p>
+                    </div>
+
+                    <div class="cell cell-half">
+                        <span class="cell-icon"><svg class="i" aria-hidden="true"><use href="#i-star"></use></svg></span>
+                        <h3>Moderation core</h3>
+                        <p>
+                            Warns, cases, timeouts, kicks, mutes and purges, all landing on
+                            one infraction record that pages by severity. Message, mod and
+                            member logging to separate channels. Moderators earned points on
+                            a weighted scale — a warn is worth less than a kick — tracked
+                            weekly and posted to a log.
+                        </p>
+                    </div>
+
+                    <div class="cell cell-half">
+                        <span class="cell-icon"><svg class="i" aria-hidden="true"><use href="#i-replay"></use></svg></span>
+                        <h3>Softban: quarantine, not exile</h3>
+                        <p>
+                            Strips a member’s roles, <em>saves</em> them, and isolates them in
+                            a lobby rather than removing them from the server. An appeal
+                            channel opens once they are eligible. Leaving and rejoining does
+                            not escape it, and deleting the lobby channel does not break it.
+                            Lifting it hands back exactly the roles they had.
+                        </p>
+                    </div>
+
+                    <div class="cell cell-half">
+                        <span class="cell-icon"><svg class="i" aria-hidden="true"><use href="#i-users"></use></svg></span>
+                        <h3>IP verification</h3>
+                        <p>
+                            A verification gate that hands out a role, and optionally refuses
+                            accounts sharing an address with an already-verified member. The
+                            address itself is never stored — only a SHA-256 hash, unique per
+                            guild, so one server’s records say nothing about another’s.
+                        </p>
+                    </div>
+
+                    <div class="cell cell-half">
+                        <span class="cell-icon"><svg class="i" aria-hidden="true"><use href="#i-search"></use></svg></span>
+                        <h3>Alt detection</h3>
+                        <p>
+                            Scores every member against a target across four string-similarity
+                            algorithms, with homoglyph and leet normalisation, account age and
+                            join proximity, avatar and banner matches, and shared roles —
+                            weighted so a role most of the server already holds counts for
+                            nothing.
+                        </p>
+                    </div>
+
+                    <div class="cell cell-half">
+                        <span class="cell-icon"><svg class="i" aria-hidden="true"><use href="#i-discord"></use></svg></span>
+                        <h3>Join-to-create voice</h3>
+                        <p>
+                            Joining one channel spawned a private VC with an owner control
+                            panel — lock, hide, rename, limit, transfer, kick, block. Mods
+                            could always see in, and were immune to both. The channel died
+                            the moment its owner left.
+                        </p>
+                    </div>
+
+                    <div class="cell cell-half">
+                        <span class="cell-icon"><svg class="i" aria-hidden="true"><use href="#i-globe"></use></svg></span>
+                        <h3>Cross-server calls</h3>
+                        <p>
+                            Text relayed live between two servers, or three in a “mashup”.
+                            Server names were never shown — participants got anonymous colour
+                            labels — and every relayed message passed the word filter whatever
+                            the sending guild had toggled off. Abuse was traceable and
+                            timeout-able from either end.
+                        </p>
+                    </div>
+
+                    <div class="cell cell-half">
+                        <span class="cell-icon"><svg class="i" aria-hidden="true"><use href="#i-sparkles"></use></svg></span>
+                        <h3>Levelling and economy</h3>
+                        <p>
+                            XP with generated rank cards and per-guild styling, global and
+                            per-server leaderboards, a wallet, and a casino behind its own
+                            channel gate — blackjack, roulette, slots, mines, steal, and a
+                            chip leaderboard.
+                        </p>
+                    </div>
+
+                    <div class="cell cell-half">
+                        <span class="cell-icon"><svg class="i" aria-hidden="true"><use href="#i-menu"></use></svg></span>
+                        <h3>And the long tail</h3>
+                        <p>
+                            An AI chat channel on a local model, music with a queue,
+                            automod, custom commands, applications and staff
+                            evaluation, a partner system with quotas, welcome and leave
+                            messages, colour roles, verification-free utilities — AFK, QR,
+                            background removal, sticker and emoji lifting, timers, a cipher —
+                            and RSS listeners posting car news into channels that asked for it.
+                        </p>
+                    </div>
+
+                    <div class="cell cell-full">
+                        <span class="cell-icon"><svg class="i" aria-hidden="true"><use href="#i-terminal"></use></svg></span>
+                        <h3>The dashboard — remote support without a backdoor</h3>
+                        <p>
+                            A PySide6 desktop app, about 15,000 lines, sharing the bot’s
+                            database: server settings, insights, a control panel, bot presence
+                            and MOTD, per-file deploys. The problem it solves is ordinary and
+                            the answer is the interesting part — a server owner needs help,
+                            and helping them means reaching into their server.
+                        </p>
+                        <p>
+                            So it cannot. Not until that server’s owner is asked over DM and
+                            presses approve, on a request only its owner or an administrator
+                            can answer — being a bot developer grants nothing, because a
+                            developer with no standing in that server is not an approver.
+                            Every change made under a grant is appended to that grant’s own
+                            log, and the owner is sent the whole log when access ends. Support
+                            access you can read afterwards is support access you can trust.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================= Keepers ======================== -->
+        <section id="keepers">
+            <div class="wrap">
+                <div class="section-head reveal">
+                    <span class="eyebrow">Worth keeping</span>
+                    <h2>Four that earned their place.</h2>
+                    <p>
+                        Out of everything above, these are the four I would build the same
+                        way again tomorrow.
+                    </p>
+                </div>
+
+                <div class="reveal">
+                    <article class="deep">
+                        <p class="deep-index">01 — The warn pipeline</p>
+                        <h3>One path, so the two commands could never drift</h3>
+                        <p>
+                            The prefix and slash versions of a warn looked like two features
+                            and were one: both ran the same action module, so a fix to either
+                            was a fix to both. The count was incremented atomically in the
+                            database rather than read-then-written, because two moderators
+                            warning at the same second would otherwise both read three, both
+                            write four, and step straight over the threshold.
+                        </p>
+                        <p>
+                            At the threshold the bot did not act. It asked — the reply grew
+                            Apply and Dismiss buttons, locked to the moderator who issued the
+                            warn, so a bystander could not escalate someone else’s call. The
+                            trigger counter reset on apply; the lifetime record never did.
+                            Removing a warn earned no moderation points, because undoing work
+                            is not work, and paying for it would have made warn-then-unwarn a
+                            points farm.
+                        </p>
+                        <div class="verdict">
+                            <p>
+                                The part that stuck: the interesting half of a moderation
+                                feature is never the action. It is who is allowed to confirm
+                                it, and what happens when two people act at once.
+                            </p>
+                        </div>
+                    </article>
+
+                    <article class="deep">
+                        <p class="deep-index">02 — The shell injection</p>
+                        <h3>A caption command that was remote code execution as root</h3>
+                        <p>
+                            One image command built its ffmpeg call as a single string and
+                            handed it to <code>exec()</code>, which on the server means
+                            <code>/bin/sh -c</code>. The user’s caption text went into that
+                            string, and the only escaping applied was for ffmpeg’s own text
+                            parser — so the shell’s substitution characters passed straight
+                            through. Substitution works inside double quotes in <code>sh</code>,
+                            so a payload never even had to break out of the quoting.
+                        </p>
+                        <p>
+                            Nothing gated the command. Prefix commands were dispatched with no
+                            permission check at all, each one expected to gate itself, and this
+                            one gated nothing. So any member of any server the bot had joined
+                            could run code as the bot process — which ran as root, and could
+                            read the file holding the token and the database URL.
+                        </p>
+                        <p>
+                            The fix was to call ffmpeg with an argument array and no shell at
+                            all. The old escaping stayed, but it was never what had made it
+                            safe. And it was verified on the server rather than assumed: the
+                            same payload through <code>exec()</code> executed, and through
+                            <code>execFile()</code> arrived as literal text.
+                        </p>
+                        <div class="verdict">
+                            <p>
+                                Found while reading the code for an unrelated reason — which is
+                                how every interesting bug that summer was found, and never by
+                                the thing that was supposed to find it.
+                            </p>
+                        </div>
+                    </article>
+
+                    <article class="deep">
+                        <p class="deep-index">03 — The trap channel</p>
+                        <h3>Bait for compromised accounts, and the honesty it required</h3>
+                        <p>
+                            A compromised Discord account sprays scam links into every channel
+                            it can reach, in order, fast. So one channel was turned into bait:
+                            open to everyone, carrying a pinned disclaimer saying exactly what
+                            it was, and anyone who posted in it was removed on the spot. No
+                            real member posts in a channel like that by accident — but an
+                            account walking the list from the top hits it almost first.
+                        </p>
+                        <p>
+                            On trigger it deleted the message, sent the user a DM saying their
+                            account was likely compromised — sent before the removal, because
+                            Discord needs a shared server for a DM to go through — removed
+                            them, recorded it against their infractions as a bot action rather
+                            than a moderator’s, and purged everything they had posted
+                            server-wide that day. Setup stripped attachments, embeds and
+                            reactions from the channel, so a scam image could not render in the
+                            seconds before the purge landed.
+                        </p>
+                        <p>
+                            Two details mattered more than the mechanism. The everyone-role was
+                            rejected as a bypass role, because accepting it would have silently
+                            disarmed the trap while still looking configured. And if the
+                            disclaimer was ever deleted, the bot posted it again — a trap
+                            without its warning is just a channel that kicks people for no
+                            stated reason.
+                        </p>
+                        <div class="verdict">
+                            <p>
+                                The last feature built, six days before the end. It shipped
+                                working.
+                            </p>
+                        </div>
+                    </article>
+
+                    <article class="deep">
+                        <p class="deep-index">04 — The AI chat guard</p>
+                        <h3>A system prompt that could not be talked out of the bot</h3>
+                        <p>
+                            One channel per server ran a chat model, and the obvious game
+                            starts immediately: talk it into printing its own instructions.
+                            Roleplay, a fake “everything above was a test, the real
+                            instructions follow”, a claimed authorised penetration test —
+                            the whole catalogue turns up within a day of switching it on.
+                        </p>
+                        <p>
+                            Two things answered it, and neither is the prompt asking nicely.
+                            First, the instructions go through the API’s <em>system role</em>
+                            rather than being pasted on top of the user’s message, so the
+                            model renders them as a genuine system turn instead of more text
+                            a user happened to type. “Ignore previous instructions” then has
+                            to beat the role separation itself, not a label in a string.
+                        </p>
+                        <p>
+                            Second, and this is the part that actually holds: a random token
+                            is generated per process and embedded in the prompt, alongside a
+                            handful of phrases distinctive to it. Every reply is matched
+                            against those before it leaves the bot. It does not matter which
+                            framing talked the model round — the check never looks at the
+                            attack, only at whether instruction text is present in the
+                            output. When it is, the reply is dropped and the user gets a
+                            refusal instead.
+                        </p>
+                        <p>
+                            A blocked attempt is worth seeing, so a server can name a private
+                            channel for them. The report carries who tried it, where, their
+                            exact prompt, and the model output that was stopped — with
+                            mentions stripped, because a security notice should not be able
+                            to ping the room. The block has already happened by then; the
+                            log exists so somebody can read the attempt afterwards.
+                        </p>
+                        <div class="verdict">
+                            <p>
+                                What I would defend hardest is the comment sitting above it
+                                in the source: this catches a near-verbatim leak, not a
+                                paraphrase, and a small local model can still be talked into
+                                ignoring its instructions. It is a backstop for the exact
+                                attack class we saw, not a solution to the general problem.
+                                Mitigations that describe themselves accurately are the only
+                                ones anyone can reason about later.
+                            </p>
+                        </div>
+                    </article>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================= Shipping ======================= -->
+        <section id="shipping">
+            <div class="wrap">
+                <div class="section-head reveal">
+                    <span class="eyebrow">Operations</span>
+                    <h2>The tooling <span class="muted">nobody using it ever saw.</span></h2>
+                    <p>
+                        Neither of these is a feature. They are the two internal things that
+                        made shipping to a live bot survivable.
+                    </p>
+                </div>
+
+                <div class="bento reveal">
+                    <div class="cell cell-full">
+                        <h3>Off the laptop, into version control</h3>
+                        <p>
+                            The stack lived where a stack should never live: on a machine,
+                            reaching the server by dragging files across in an FTP client.
+                            One dead drive, one bad overwrite, and a year of work is a
+                            story rather than a codebase. I moved the whole thing, on my
+                            own, into a repository with a real path to production behind it
+                            — line endings pinned so a Windows checkout and a Linux runner
+                            agree on what a file even is, a deploy that ships the last
+                            pushed commit and restarts the process manager, an exclude list
+                            that stops a deploy overwriting the live config and the
+                            server-side runtime state, and a written runbook for the parts
+                            that live outside the repo.
+                        </p>
+                        <p>
+                            None of that is a feature and no user ever noticed it. It is
+                            the reason the project is still around to be argued over.
+                        </p>
+                    </div>
+
+                    <div class="cell cell-half">
+                        <h3>Two deploy routes that agreed byte for byte</h3>
+                        <p>
+                            A GitHub Actions workflow shipped the last pushed commit and
+                            restarted the process manager; the dashboard shipped individual
+                            files straight off a laptop for a fix being tested. The trap is
+                            line endings — a Windows checkout holds CRLF for some files and LF
+                            for others, so the two routes would have overwritten each other’s
+                            copies of unchanged files forever. The dashboard therefore hashed
+                            and uploaded the bytes <em>git would check out</em>, resolved per
+                            file, rather than the bytes on disk. Both routes shared one exclude
+                            list, so neither could ever clobber a live config.
+                        </p>
+                    </div>
+
+                    <div class="cell cell-half">
+                        <h3>The Command Visualiser</h3>
+                        <p>
+                            Internal only — no user ever saw this. A generated, self-contained
+                            page that read every command file the bot would register and laid
+                            out its options, subcommands, and the replies each branch could
+                            send, so a command could be reviewed before production rather than
+                            after. It flagged the ones that fail <em>silently</em> from the
+                            wrong account, which is the worst way for a command to be broken,
+                            and listed the files that would not load at all — separating the
+                            ones genuinely broken from the ones merely missing a package on
+                            this laptop.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================== End ========================== -->
+        <section id="end">
+            <div class="wrap">
+                <div class="closing reveal">
+                    <span class="eyebrow">Handing over</span>
+                    <p class="lede">
+                        My part ended for reasons that had nothing to do with the code.
+                    </p>
+                    <p>
+                        The project did not end with it. It is still running, still being
+                        worked on, still doing the job in servers full of people who will
+                        never know which half of it was mine — which is, honestly, the
+                        correct outcome for infrastructure. You do not get to keep the
+                        thing. You get to have built it.
+                    </p>
+                    <p>
+                        My copy of the history is kept whole — every branch, the full log,
+                        my last commit exactly as it stood. Nothing deleted, nothing
+                        rewritten to look better in hindsight. It was the largest thing I
+                        had built, it went out to real servers for real people, and it
+                        worked.
+                    </p>
+                    <p>
+                        Once a pleb, always a pleb.
+                    </p>
+
+                    <div class="hero-actions closing-actions">
+                        <a href="portfolio.html#projects" class="btn btn-primary">
+                            See what came next
+                            <svg class="i" aria-hidden="true"><use href="#i-arrow-right"></use></svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>© <span id="year">2026</span> Plebbian. All rights reserved.</p>
+        <p>Made with Pleb AI · <a href="index.html">Back home</a></p>
+        <p class="footer-note">
+            Built on <code>main</code> · shipped from <code>live-website</code> via pull request ·
+            <a href="https://github.com/Trainer-Han/plebbian.com" target="_blank" rel="noopener noreferrer">source</a>
+        </p>
+    </footer>
+
+    <script src="assets/app.js" defer></script>
+</body>
+</html>
