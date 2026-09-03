@@ -132,7 +132,8 @@
             margin: 0 auto;
             text-align: center;
         }
-        .closing p { color: var(--text-dim); }
+        .closing p { color: var(--text-dim); margin: 0 0 20px; }
+        .closing p:last-of-type { margin-bottom: 0; }
         .closing .lede {
             font-family: var(--font-display);
             font-size: clamp(20px, 2.4vw, 26px);
@@ -140,6 +141,7 @@
             letter-spacing: -0.02em;
             line-height: 1.4;
             color: var(--text-bright);
+            margin: 18px 0 24px;
         }
         .closing-actions { justify-content: center; margin-top: 26px; }
 
@@ -514,8 +516,8 @@
                     </div>
 
                     <div class="cell cell-narrow cell-metric">
-                        <b>0</b>
-                        <span>Secrets in the repo</span>
+                        <b>2</b>
+                        <span>Routes, one contract</span>
                     </div>
                 </div>
             </div>
