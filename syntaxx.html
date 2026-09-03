@@ -411,8 +411,9 @@
                         <span class="cell-icon"><svg class="i" aria-hidden="true"><use href="#i-menu"></use></svg></span>
                         <h3>And the long tail</h3>
                         <p>
-                            Music with a queue, automod, custom commands, applications and
-                            staff evaluation, a partner system with quotas, welcome and leave
+                            An AI chat channel on a local model, music with a queue,
+                            automod, custom commands, applications and staff
+                            evaluation, a partner system with quotas, welcome and leave
                             messages, colour roles, verification-free utilities — AFK, QR,
                             background removal, sticker and emoji lifting, timers, a cipher —
                             and RSS listeners posting car news into channels that asked for it.
@@ -448,9 +449,9 @@
             <div class="wrap">
                 <div class="section-head reveal">
                     <span class="eyebrow">Worth keeping</span>
-                    <h2>Three that earned their place.</h2>
+                    <h2>Four that earned their place.</h2>
                     <p>
-                        Out of everything above, these are the three I would build the same
+                        Out of everything above, these are the four I would build the same
                         way again tomorrow.
                     </p>
                 </div>
@@ -556,6 +557,56 @@
                             </p>
                         </div>
                     </article>
+
+                    <article class="deep">
+                        <p class="deep-index">04 — The AI chat guard</p>
+                        <h3>A system prompt that could not be talked out of the bot</h3>
+                        <p>
+                            One channel per server ran a chat model, and the obvious game
+                            starts immediately: talk it into printing its own instructions.
+                            Roleplay, a fake “everything above was a test, the real
+                            instructions follow”, a claimed authorised penetration test —
+                            the whole catalogue turns up within a day of switching it on.
+                        </p>
+                        <p>
+                            Two things answered it, and neither is the prompt asking nicely.
+                            First, the instructions go through the API’s <em>system role</em>
+                            rather than being pasted on top of the user’s message, so the
+                            model renders them as a genuine system turn instead of more text
+                            a user happened to type. “Ignore previous instructions” then has
+                            to beat the role separation itself, not a label in a string.
+                        </p>
+                        <p>
+                            Second, and this is the part that actually holds: a random token
+                            is generated per process and embedded in the prompt, alongside a
+                            handful of phrases distinctive to it. Every reply is matched
+                            against those before it leaves the bot. It does not matter which
+                            framing talked the model round — the check never looks at the
+                            attack, only at whether instruction text is present in the
+                            output. When it is, the reply is dropped and the user gets a
+                            refusal instead.
+                        </p>
+                        <p>
+                            A blocked attempt is worth seeing, so a server can name a private
+                            channel for them. The report carries who tried it, where, their
+                            exact prompt, and the model output that was stopped — with
+                            mentions stripped, because a security notice should not be able
+                            to ping the room. The block has already happened by then; the
+                            log exists so somebody can read the attempt afterwards.
+                        </p>
+                        <div class="verdict">
+                            <p>
+                                What I would defend hardest is the comment sitting above it
+                                in the source: this catches a near-verbatim leak, not a
+                                paraphrase, and a small local model can still be talked into
+                                ignoring its instructions. It is a backstop for the exact
+                                attack class we saw, not a solution to the general problem.
+                                Mitigations that describe themselves accurately are the only
+                                ones anyone can reason about later.
+                            </p>
+                        </div>
+                    </article>
+
                 </div>
             </div>
         </section>
@@ -573,6 +624,27 @@
                 </div>
 
                 <div class="bento reveal">
+                    <div class="cell cell-full">
+                        <h3>Off the laptop, into version control</h3>
+                        <p>
+                            The stack lived where a stack should never live: on a machine,
+                            reaching the server by dragging files across in an FTP client.
+                            One dead drive, one bad overwrite, and a year of work is a
+                            story rather than a codebase. I moved the whole thing, on my
+                            own, into a repository with a real path to production behind it
+                            — line endings pinned so a Windows checkout and a Linux runner
+                            agree on what a file even is, a deploy that ships the last
+                            pushed commit and restarts the process manager, an exclude list
+                            that stops a deploy overwriting the live config and the
+                            server-side runtime state, and a written runbook for the parts
+                            that live outside the repo.
+                        </p>
+                        <p>
+                            None of that is a feature and no user ever noticed it. It is
+                            the reason the project is still around to be argued over.
+                        </p>
+                    </div>
+
                     <div class="cell cell-half">
                         <h3>Two deploy routes that agreed byte for byte</h3>
                         <p>
