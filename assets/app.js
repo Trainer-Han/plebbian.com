@@ -441,6 +441,18 @@
        real entry as a second card with the same name and a thinner story. */
     var SUPERSEDED_REPOS = ['BimmerLink'];
 
+    /* Public repos that are not projects.
+       github.com/Trainer-Han/Trainer-Han is the profile README — GitHub renders
+       it on the profile page and it exists for no other reason. In a grid of
+       work it had no cover, no description and no story, so it showed as two
+       initials in a box: the one card on the page that looked unfinished
+       rather than private. Excluded here rather than given artwork, because
+       the problem was never the missing image.
+
+       It still counts in the "Public repos" stat, which is a count of repos
+       and stays true. */
+    var NOT_PROJECTS = ['Trainer-Han'];
+
     /* Cover art for fetched repos, keyed by repo name.
        A card with no cover falls back to two initials in a box, which reads as
        a placeholder rather than as a project. These are screenshots of the
@@ -659,7 +671,9 @@
 
         var fetched = data.repos
             .filter(function (r) {
-                return !r.fork && !r.archived && SUPERSEDED_REPOS.indexOf(r.name) === -1;
+                return !r.fork && !r.archived &&
+                    SUPERSEDED_REPOS.indexOf(r.name) === -1 &&
+                    NOT_PROJECTS.indexOf(r.name) === -1;
             })
             .sort(function (a, b) {
                 if (b.stargazers_count !== a.stargazers_count) {
