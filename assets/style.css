@@ -1797,6 +1797,44 @@ footer a:hover { color: var(--text-bright); }
 }
 
 /* --------------------------------------------------------------------------
+   Easter egg — the beat between finding it and landing on /plebbed.
+   Built by app.js, and only ever when motion is welcome, so there is no
+   reduced-motion variant below: the element is simply never created.
+   -------------------------------------------------------------------------- */
+.pleb-flash {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-toast);
+    display: grid;
+    place-items: center;
+    background: rgba(2, 6, 23, 0.82);
+    backdrop-filter: blur(6px);
+    pointer-events: none;
+    animation: pleb-flash-in 0.2s ease-out backwards;
+}
+
+.pleb-flash span {
+    padding: 0.4em 0.7em;
+    border: 5px solid currentColor;
+    border-radius: 10px;
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 12vw, 5rem);
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: #f87171;
+    transform: rotate(-11deg);
+    animation: pleb-flash-thunk 0.34s var(--ease) 0.1s backwards;
+}
+
+@keyframes pleb-flash-in {
+    from { opacity: 0; }
+}
+
+@keyframes pleb-flash-thunk {
+    from { opacity: 0; transform: rotate(-11deg) scale(3); }
+}
+
+/* --------------------------------------------------------------------------
    Reduced motion — kill every decorative animation and all smooth scrolling
    -------------------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
