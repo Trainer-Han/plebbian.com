@@ -18,7 +18,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
-const PAGES = ['index.html', 'portfolio.html', 'syntaxx.html', 'demos.html', '404.html'];
+const PAGES = ['index.html', 'portfolio.html', 'syntaxx.html', 'demos.html', '404.html', 'plebbed.html'];
 const SOURCES = ['assets/style.css', 'assets/app.js', 'assets/wordmark.js'];
 const REQUIRED_ASSETS = [
     'assets/style.css',
@@ -27,6 +27,7 @@ const REQUIRED_ASSETS = [
     'assets/favicon.svg',
     'assets/apple-touch-icon.png',
     'assets/og-image.png',
+    'assets/og-plebbed.png',
     'assets/syntaxx-hero.webp',
     'assets/decodesigns-cover.webp',
     'assets/bimmerlink-cover.webp',

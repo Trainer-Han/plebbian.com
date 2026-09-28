@@ -441,6 +441,18 @@
        real entry as a second card with the same name and a thinner story. */
     var SUPERSEDED_REPOS = ['BimmerLink'];
 
+    /* Public repos that are not projects.
+       github.com/Trainer-Han/Trainer-Han is the profile README — GitHub renders
+       it on the profile page and it exists for no other reason. In a grid of
+       work it had no cover, no description and no story, so it showed as two
+       initials in a box: the one card on the page that looked unfinished
+       rather than private. Excluded here rather than given artwork, because
+       the problem was never the missing image.
+
+       It still counts in the "Public repos" stat, which is a count of repos
+       and stays true. */
+    var NOT_PROJECTS = ['Trainer-Han'];
+
     /* Cover art for fetched repos, keyed by repo name.
        A card with no cover falls back to two initials in a box, which reads as
        a placeholder rather than as a project. These are screenshots of the
@@ -659,7 +671,9 @@
 
         var fetched = data.repos
             .filter(function (r) {
-                return !r.fork && !r.archived && SUPERSEDED_REPOS.indexOf(r.name) === -1;
+                return !r.fork && !r.archived &&
+                    SUPERSEDED_REPOS.indexOf(r.name) === -1 &&
+                    NOT_PROJECTS.indexOf(r.name) === -1;
             })
             .sort(function (a, b) {
                 if (b.stargazers_count !== a.stargazers_count) {
@@ -937,6 +951,66 @@
 
         box.addEventListener('click', function (e) { if (e.target === box) close(); });
         $$('[data-palette-open]').forEach(function (b) { b.addEventListener('click', open); });
+    }());
+
+    /* ======================================================================
+       Easter egg
+
+       Two ways in, both undiscoverable unless you already suspect something:
+       the konami code, or simply typing what the site is called. Both land on
+       /plebbed, which is also a link that can just be sent to someone.
+       ====================================================================== */
+    (function plebbed() {
+        var TARGET = '/plebbed';
+        var KONAMI = ['arrowup', 'arrowup', 'arrowdown', 'arrowdown',
+            'arrowleft', 'arrowright', 'arrowleft', 'arrowright', 'b', 'a'];
+        var WORD = 'pleb';
+
+        var step = 0;
+        var typed = '';
+        var fired = false;
+
+        // Never steal keystrokes from the palette, or from any field a
+        // visitor is actually typing into.
+        function isTyping(el) {
+            if (!el) return false;
+            return el.isContentEditable || /^(input|textarea|select)$/i.test(el.tagName);
+        }
+
+        function fire() {
+            if (fired) return;
+            fired = true;
+
+            // The flourish is the reward for finding it; without it the page
+            // just navigates and the discovery lands flat. Anyone who asked
+            // for less motion gets the destination and none of the theatre.
+            if (reduceMotion) { location.href = TARGET; return; }
+
+            var flash = document.createElement('div');
+            flash.className = 'pleb-flash';
+            flash.setAttribute('aria-hidden', 'true');
+            flash.innerHTML = '<span>PLEBBED</span>';
+            document.body.appendChild(flash);
+
+            setTimeout(function () { location.href = TARGET; }, 900);
+        }
+
+        document.addEventListener('keydown', function (e) {
+            if (!e.key || e.ctrlKey || e.metaKey || e.altKey) return;
+            if (isTyping(e.target)) return;
+
+            var key = e.key.toLowerCase();
+
+            // A wrong key restarts the sequence rather than killing it, so a
+            // fumbled run does not need a pause before trying again.
+            step = key === KONAMI[step] ? step + 1 : (key === KONAMI[0] ? 1 : 0);
+            if (step === KONAMI.length) { step = 0; fire(); return; }
+
+            if (key.length === 1) {
+                typed = (typed + key).slice(-WORD.length);
+                if (typed === WORD) fire();
+            }
+        });
     }());
 
     /* ======================================================================
