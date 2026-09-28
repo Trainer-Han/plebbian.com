@@ -392,6 +392,19 @@ section { padding: 120px 24px; }
     color: var(--text-bright);
 }
 
+/* Button-shaped, but not a link: a handle to read, not a place to go.
+   No hover change, so it never promises a click. */
+.btn-static,
+.btn-static:hover {
+    background: color-mix(in srgb, var(--text-muted) 8%, transparent);
+    border-color: var(--line-strong);
+    border-style: dashed;
+    color: var(--text);
+    cursor: default;
+}
+
+.btn-static .handle { user-select: all; cursor: text; }
+
 /* --------------------------------------------------------------------------
    Floating glass nav
    -------------------------------------------------------------------------- */
