@@ -368,6 +368,38 @@
             credit: 'Built with Louis (lode787).'
         },
         {
+            // Its own entry rather than a line in syntaxx.lol's: it is a
+            // separate app with its own job, and only talks to the bot through
+            // syntaxx.lol. No cover yet — initials until there is a real
+            // screenshot, per REPO_COVERS below.
+            name: 'Syntaxx Dashboard',
+            description: 'Windows desktop app for running syntaxx.lol at scale — bot-wide ' +
+                'and per-server settings, removing the bot from servers, and the ' +
+                'tooling to support users, maintain the bot and keep it secure.',
+            language: 'Python',
+            homepage: 'syntaxx.html#build',
+            homepageLabel: 'Read the write-up',
+            manual: true,
+            note: 'Windows app',
+            badge: 'Internal tool',
+            modalDesc: 'A Windows desktop app that works through syntaxx.lol, built ' +
+                'around scale and around supporting the people who use the bot. ' +
+                'Settings can be changed for the bot as a whole or for a single ' +
+                'server, and the bot can be removed from a server from inside it. ' +
+                'Around that sits the tooling for the team: support for server ' +
+                'owners, a control panel, insights, bot presence and MOTD, and ' +
+                'per-file deploys for maintenance. Security is built in, not added: ' +
+                'reaching into a server needs its owner to approve over DM first, ' +
+                'every change made under that approval is logged, and the owner is ' +
+                'sent the whole log when access ends.',
+            facts: [
+                { label: 'Platform', value: 'Windows' },
+                { label: 'Stack', value: 'Python · PySide6' },
+                { label: 'Works with', value: 'syntaxx.lol' },
+                { label: 'Source', value: 'Private' }
+            ]
+        },
+        {
             name: 'Deco Designs',
             description: 'WooCommerce rebuild for an authorised Brother sewing and ' +
                 'embroidery dealership — bespoke theme, an 89-product catalogue ' +
