@@ -18,7 +18,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
-const PAGES = ['index.html', 'portfolio.html', 'syntaxx.html', 'demos.html', '404.html', 'plebbed.html'];
+const PAGES = ['index.html', 'portfolio.html', 'syntaxx.html', 'plebbium.html', 'demos.html', '404.html', 'plebbed.html'];
 const SOURCES = ['assets/style.css', 'assets/app.js', 'assets/wordmark.js'];
 const REQUIRED_ASSETS = [
     'assets/style.css',
@@ -33,6 +33,20 @@ const REQUIRED_ASSETS = [
     'assets/bimmerlink-cover.webp',
     'assets/plebbian-cover.webp',
     'assets/syntaxx-web-cover.webp',
+    'assets/plebbium-cover.webp',
+    'assets/plebbium/new-tab.webp',
+    'assets/plebbium/everything-bar.webp',
+    'assets/plebbium/ask.webp',
+    'assets/plebbium/blocker.webp',
+    'assets/plebbium/workspaces.webp',
+    'assets/plebbium/separate-logins.webp',
+    'assets/plebbium/link-preview.webp',
+    'assets/plebbium/tidy.webp',
+    'assets/plebbium/ask-your-tabs.webp',
+    'assets/plebbium/pleb-ai.webp',
+    'assets/plebbium/calm-tabs.webp',
+    'assets/plebbium/convert.webp',
+    'assets/plebbium/updates.webp',
     'assets/fonts/archivo-latin-var.woff2',
     'assets/fonts/space-grotesk-latin-var.woff2',
     'assets/fonts/LICENSE.md',
