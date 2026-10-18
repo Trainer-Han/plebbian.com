@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Plebbium is a Chromium browser for Windows with Pleb's features built in: one bar for everything, workspaces with their own logins, a blocker, tabs that tidy themselves, and AI that runs on your own computer.">
+    <meta name="author" content="Plebbian">
+    <meta name="theme-color" content="#0f172a">
+
+    <title>Plebbium — Plebbian</title>
+    <link rel="canonical" href="https://plebbian.com/plebbium.html">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Plebbium — the browser that gets more done">
+    <meta property="og:description" content="A Chromium browser for Windows with Pleb's features built in. Free to download.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://plebbian.com/plebbium.html">
+    <meta property="og:image" content="https://plebbian.com/assets/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="Plebbian">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Plebbium — the browser that gets more done">
+    <meta name="twitter:description" content="A Chromium browser for Windows with Pleb's features built in. Free to download.">
+    <meta name="twitter:image" content="https://plebbian.com/assets/og-image.png">
+
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('pleb.theme');
+                if (!t) t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', t);
+            } catch (e) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        }());
+    </script>
+
+    <link rel="preload" href="assets/fonts/archivo-latin-var.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="assets/fonts/space-grotesk-latin-var.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="assets/style.css">
+
+    <style>
+        /* Page-local: the feature gallery and the install steps. The boards
+           are the designs each feature was built from, so they stay dark in
+           both themes, the way the browser itself is. */
+        .stamp {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            border: 1px solid var(--line-strong);
+            border-radius: 999px;
+            padding: 7px 15px;
+        }
+        .stamp .i { width: 14px; height: 14px; }
+        .download-note {
+            margin: 18px 0 0;
+            font-size: 14px;
+            color: var(--text-muted);
+            max-width: 62ch;
+        }
+
+        .feature-chips {
+            position: relative;
+            list-style: none;
+            margin: 0 0 30px;
+            padding: 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .feature-chip {
+            font: 500 13px var(--font-body);
+            color: var(--text-dim);
+            background: var(--surface);
+            border: 1px solid var(--line-strong);
+            border-radius: 999px;
+            padding: 7px 13px;
+            min-height: 34px;
+            cursor: pointer;
+            transition: color 0.2s, border-color 0.2s, background 0.2s;
+        }
+        .feature-chip:hover { color: var(--text-bright); border-color: var(--violet); }
+        .feature-chip[aria-current="true"] {
+            color: var(--text-bright);
+            border-color: var(--violet);
+            background: color-mix(in srgb, var(--violet) 18%, transparent);
+        }
+        .feature-chip:focus-visible, .gallery:focus-visible { outline: 2px solid var(--violet); outline-offset: 3px; }
+
+        /* Full-bleed track: past the section's padding, with the first slide
+           lined up on the page's column. */
+        .gallery {
+            position: relative;
+            display: flex;
+            gap: 26px;
+            margin-inline: -24px;
+            padding: 6px max(24px, calc((100% - var(--wrap)) / 2 + 24px)) 18px;
+            overflow-x: auto;
+            overscroll-behavior-x: contain;
+            scroll-snap-type: x mandatory;
+            scroll-padding-inline: max(24px, calc((100% - var(--wrap)) / 2 + 24px));
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--line-strong) transparent;
+            cursor: grab;
+        }
+        .gallery.dragging { cursor: grabbing; scroll-snap-type: none; scroll-behavior: auto; }
+        .gallery.dragging img { pointer-events: none; }
+        .slide {
+            flex: 0 0 min(880px, 84vw);
+            margin: 0;
+            scroll-snap-align: start;
+            opacity: 0.55;
+            transition: opacity 0.4s var(--ease-soft);
+        }
+        .slide[aria-current="true"] { opacity: 1; }
+        .slide img {
+            display: block;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 5 / 3;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--line-strong);
+            background: #0b1120;
+            box-shadow: var(--shadow-lg);
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+        .slide figcaption { padding: 20px 4px 0; max-width: 66ch; }
+        .slide-key {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            border: 1px solid var(--line-strong);
+            border-radius: 7px;
+            padding: 3px 8px;
+        }
+        .slide h3 {
+            font-family: var(--font-display);
+            font-size: clamp(21px, 2.4vw, 26px);
+            letter-spacing: -0.02em;
+            color: var(--text-bright);
+            margin: 12px 0 8px;
+        }
+        .slide p { color: var(--text-dim); margin: 0; }
+
+        .gallery-controls {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-top: 14px;
+        }
+        .gallery-count {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            letter-spacing: 0.12em;
+            color: var(--text-muted);
+            min-width: 7ch;
+        }
+        .gallery-bar {
+            flex: 1;
+            height: 2px;
+            border-radius: 2px;
+            background: var(--line-strong);
+            overflow: hidden;
+        }
+        .gallery-bar i {
+            display: block;
+            height: 100%;
+            width: 0;
+            background: var(--grad);
+            transition: width 0.3s var(--ease-soft);
+        }
+        .gallery-controls .icon-btn:disabled { opacity: 0.35; cursor: default; }
+
+        .steps {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 14px;
+            counter-reset: step;
+        }
+        .steps li {
+            display: grid;
+            grid-template-columns: 3rem 1fr;
+            gap: 16px;
+            padding: 20px 22px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: var(--surface);
+            color: var(--text-dim);
+        }
+        .steps li::before {
+            counter-increment: step;
+            content: counter(step, decimal-leading-zero);
+            font-family: var(--font-mono);
+            font-size: 13px;
+            letter-spacing: 0.12em;
+            color: var(--text-muted);
+            padding-top: 3px;
+        }
+        .steps b { color: var(--text-bright); font-weight: 600; }
+        .steps p { margin: 6px 0 0; }
+        .steps .btn { margin-top: 14px; }
+
+        .closing { max-width: 60ch; margin: 0 auto; text-align: center; }
+        .closing p { color: var(--text-dim); margin: 0 0 20px; }
+        .closing-actions { justify-content: center; margin-top: 26px; }
+
+        @media (prefers-reduced-motion: reduce) {
+            .gallery { scroll-behavior: auto; }
+            .slide, .gallery-bar i { transition: none; }
+        }
+        @media (max-width: 860px) {
+            .steps li { grid-template-columns: 1fr; gap: 6px; }
+            .slide { flex-basis: 88vw; }
+        }
+        /* Sections pad 20px from here (style.css), so the bleed follows. */
+        @media (max-width: 768px) {
+            .gallery { margin-inline: -20px; padding-inline: 20px; scroll-padding-inline: 20px; }
+            /* One swipeable row of chips, so the boards stay near the top. */
+            .feature-chips {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                margin-inline: -20px;
+                padding: 2px 20px 8px;
+                scrollbar-width: none;
+            }
+            .feature-chips li { flex: none; }
+            .feature-chip { white-space: nowrap; }
+        }
+    </style>
+</head>
+<body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+        <symbol id="i-github" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7 0-.7 0-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.9 2.9 1.3 3.6 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-6A4.7 4.7 0 0 1 6.6 8c-.2-.3-.6-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.4 11.4 0 0 1 6 0C18.3 4.5 19.3 4.8 19.3 4.8c.7 1.7.3 2.9.1 3.2a4.7 4.7 0 0 1 1.3 3.3c0 4.6-2.8 5.6-5.5 5.9.5.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3Z"/></symbol>
+        <symbol id="i-discord" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.3698a19.7913 19.7913 0 0 0-4.8851-1.5152.0741.0741 0 0 0-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 0 0-.0785-.037 19.7363 19.7363 0 0 0-4.8852 1.515.0699.0699 0 0 0-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 0 0 .0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 0 0 .0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 0 0-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 0 1-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 0 1 .0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 0 1 .0785.0095c.1202.099.246.198.3728.2924a.077.077 0 0 1-.0066.1276 12.2986 12.2986 0 0 1-1.873.8914.0766.0766 0 0 0-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 0 0 .0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 0 0 .0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 0 0-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z"/></symbol>
+        <symbol id="i-star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8l-6.2 3.2L7 14.2l-5-4.9 6.9-1z"/></symbol>
+        <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+        <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+        <symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+        <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+        <symbol id="i-arrow-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></symbol>
+        <symbol id="i-external" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
+        <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+        <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+        <symbol id="i-replay" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></symbol>
+        <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></symbol>
+        <symbol id="i-terminal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></symbol>
+        <symbol id="i-sparkles" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></symbol>
+        <symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></symbol>
+        <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+        <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></symbol>
+        <symbol id="i-chevron-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></symbol>
+        <symbol id="i-chevron-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></symbol>
+        <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/></symbol>
+    </svg>
+
+    <div class="bg" aria-hidden="true">
+        <canvas id="dots"></canvas>
+    </div>
+
+    <div class="nav-shell" id="navShell">
+        <nav class="nav" aria-label="Main">
+            <a href="index.html" class="nav-brand"><span class="mark" aria-hidden="true"></span>Plebbian</a>
+
+            <ul class="nav-links">
+                <li><a href="index.html#top">Home</a></li>
+                <li><a href="portfolio.html#hero">Portfolio</a></li>
+                <li><a href="portfolio.html#about">About</a></li>
+                <li><a href="portfolio.html#featured">Featured</a></li>
+                <li><a href="portfolio.html#projects">Projects</a></li>
+                <li><a href="portfolio.html#contact">Contact</a></li>
+                <li><a href="demos.html">Demos</a></li>
+            </ul>
+
+            <div class="nav-tools nav-links-spacer">
+                <button class="kbd-btn" type="button" data-palette-open aria-label="Open command palette">
+                    <svg class="i" aria-hidden="true"><use href="#i-search"></use></svg>
+                    <kbd>Ctrl K</kbd>
+                </button>
+                <button class="icon-btn" id="themeToggle" type="button" aria-label="Switch theme"></button>
+                <a class="icon-btn" href="https://github.com/Trainer-Han" target="_blank" rel="noopener noreferrer" aria-label="GitHub profile">
+                    <svg class="i" aria-hidden="true"><use href="#i-github"></use></svg>
+                </a>
+                <button class="icon-btn nav-toggle" id="navToggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="navPanel">
+                    <svg class="i" aria-hidden="true"><use href="#i-menu"></use></svg>
+                </button>
+            </div>
+
+            <span class="nav-progress" id="navProgress" aria-hidden="true"></span>
+        </nav>
+
+        <div class="nav-panel" id="navPanel">
+            <a href="index.html#top">Home</a>
+            <a href="portfolio.html#hero">Portfolio</a>
+            <a href="portfolio.html#about">About</a>
+            <a href="portfolio.html#featured">Featured</a>
+            <a href="portfolio.html#projects">Projects</a>
+            <a href="portfolio.html#skills">Skills</a>
+            <a href="portfolio.html#contact">Contact</a>
+            <a href="demos.html">Demos</a>
+        </div>
+    </div>
+
+    <div class="palette" id="palette" role="dialog" aria-modal="true" aria-label="Command palette">
+        <div class="palette-box">
+            <div class="palette-input-row">
+                <svg class="i" aria-hidden="true"><use href="#i-search"></use></svg>
+                <input id="paletteInput" type="text" placeholder="Jump to…" autocomplete="off" spellcheck="false" aria-label="Search commands">
+                <kbd>Esc</kbd>
+            </div>
+            <ul class="palette-list" id="paletteList" role="listbox" aria-label="Commands"></ul>
+        </div>
+    </div>
+
+    <main id="main">
+        <!-- ========================= Hero ========================= -->
+        <section class="hero" id="top">
+            <div class="wrap hero-inner">
+                <span class="stamp">
+                    <svg class="i" aria-hidden="true"><use href="#i-globe"></use></svg>
+                    A browser for Windows · built on Chromium
+                </span>
+
+                <h1>Plebbium</h1>
+                <p class="hero-tagline">The browser that gets more done.</p>
+
+                <p class="hero-copy">
+                    Chromium, built from source, with Pleb's features built in rather than
+                    bolted on: one bar for everything, workspaces with their own logins, a
+                    blocker, tabs that tidy themselves, and AI that runs on your own computer.
+                    It is the browser I use every day, and it keeps itself up to date.
+                </p>
+
+                <div class="hero-actions">
+                    <a href="https://updates.plebbian.com/download/Plebbium-Setup.exe" class="btn btn-primary">
+                        <svg class="i" aria-hidden="true"><use href="#i-download"></use></svg>
+                        Download for Windows
+                    </a>
+                    <a href="#features" class="btn btn-ghost">
+                        See what it does
+                        <svg class="i" aria-hidden="true"><use href="#i-arrow-right"></use></svg>
+                    </a>
+                </div>
+                <p class="download-note">
+                    Free · Windows 10 and 11, 64-bit · about 170 MB · installs for you only,
+                    no admin rights needed. It is not code-signed yet, so Windows asks once:
+                    choose <b>More info</b>, then <b>Run anyway</b>.
+                </p>
+            </div>
+        </section>
+
+        <!-- ======================== Features ======================== -->
+        <section id="features">
+            <div class="wrap">
+                <div class="section-head reveal">
+                    <span class="eyebrow">What it does</span>
+                    <h2>13 things, <span class="muted">one browser.</span></h2>
+                    <p>
+                        Each board is the design the feature was built from. Swipe or drag
+                        through them, use the arrow keys, or jump straight to one.
+                    </p>
+                </div>
+
+                <ul class="feature-chips" aria-label="Jump to a feature">
+                    <li><button type="button" class="feature-chip" data-go="0">A calm place to start</button></li>
+                    <li><button type="button" class="feature-chip" data-go="1">One bar for everything</button></li>
+                    <li><button type="button" class="feature-chip" data-go="2">Ask ChatGPT or Claude from anywhere</button></li>
+                    <li><button type="button" class="feature-chip" data-go="3">Ads and trackers, gone</button></li>
+                    <li><button type="button" class="feature-chip" data-go="4">Workspaces</button></li>
+                    <li><button type="button" class="feature-chip" data-go="5">Separate logins</button></li>
+                    <li><button type="button" class="feature-chip" data-go="6">Know before you click</button></li>
+                    <li><button type="button" class="feature-chip" data-go="7">Tidy in one word</button></li>
+                    <li><button type="button" class="feature-chip" data-go="8">Ask your tabs</button></li>
+                    <li><button type="button" class="feature-chip" data-go="9">Pleb AI, on your computer</button></li>
+                    <li><button type="button" class="feature-chip" data-go="10">Tabs that tidy themselves</button></li>
+                    <li><button type="button" class="feature-chip" data-go="11">Prices and units, converted</button></li>
+                    <li><button type="button" class="feature-chip" data-go="12">Always current</button></li>
+                </ul>
+            </div>
+
+            <div class="gallery" id="gallery" tabindex="0" role="region" aria-roledescription="carousel" aria-label="Plebbium's features">
+                <figure class="slide" role="group" aria-roledescription="slide" aria-label="1 of 13: A calm place to start">
+                    <img src="assets/plebbium/new-tab.webp" alt="Plebbium&#x27;s new tab page: a large gradient clock, a search box, workspace chips and recently archived pages." width="1800" height="1080" loading="eager" decoding="async">
+                    <figcaption>
+                        <span class="slide-key">New tab</span>
+                        <h3>A calm place to start</h3>
+                        <p>A clock, one search box with !bangs, your workspaces, and the pages you can pick up where you left off.</p>
+                    </figcaption>
+                </figure>
+                <figure class="slide" role="group" aria-roledescription="slide" aria-label="2 of 13: One bar for everything">
+                    <img src="assets/plebbium/everything-bar.webp" alt="The Everything bar open in the middle of the window, offering to ask ChatGPT, Claude or Pleb AI, or to search the web." width="1800" height="1080" loading="eager" decoding="async">
+                    <figcaption>
+                        <span class="slide-key">Ctrl+Shift+A</span>
+                        <h3>One bar for everything</h3>
+                        <p>Commands, open tabs, bookmarks, history, the Archive, sums and conversions. Type a question and Enter asks ChatGPT, or Claude, or Pleb AI on your own computer.</p>
+                    </figcaption>
+                </figure>
+                <figure class="slide" role="group" aria-roledescription="slide" aria-label="3 of 13: Ask ChatGPT or Claude from anywhere">
+                    <img src="assets/plebbium/ask.webp" alt="The address bar in Ask ChatGPT mode, and a right-click menu offering to ask ChatGPT or Claude about the selected text." width="1800" height="1080" loading="lazy" decoding="async">
+                    <figcaption>
+                        <span class="slide-key">gpt / clau</span>
+                        <h3>Ask ChatGPT or Claude from anywhere</h3>
+                        <p>Type gpt or clau and a space in the address bar. Right-click a selection, or the page itself, to ask about it with its source attached.</p>
+                    </figcaption>
+                </figure>
+                <figure class="slide" role="group" aria-roledescription="slide" aria-label="4 of 13: Ads and trackers, gone">
+                    <img src="assets/plebbium/blocker.webp" alt="A news article with no ads, and the Blocker panel counting 31 blocked: 18 ads, 11 trackers, 2 annoyances." width="1800" height="1080" loading="lazy" decoding="async">
+                    <figcaption>
+                        <span class="slide-key">Pleb button</span>
+                        <h3>Ads and trackers, gone</h3>
+                        <p>Blocked by Chromium itself, from EasyList, EasyPrivacy and the cookie-notice and annoyance lists. The count sits on the Pleb button; one switch turns blocking off for a site.</p>
+                    </figcaption>
+                </figure>
+                <figure class="slide" role="group" aria-roledescription="slide" aria-label="5 of 13: Workspaces">
+                    <img src="assets/plebbium/workspaces.webp" alt="The workspace switcher listing Home, Work, Side project and Lisbon trip with their tab counts and shortcuts." width="1800" height="1080" loading="lazy" decoding="async">
+                    <figcaption>
+                        <span class="slide-key">Ctrl+Shift+1 to 9</span>
+                        <h3>Workspaces</h3>
+                        <p>Named sets of tabs in one window: Work, Home, a project. Switching reloads nothing; the tabs you leave wait exactly as they were.</p>
+                    </figcaption>
+                </figure>
+                <figure class="slide" role="group" aria-roledescription="slide" aria-label="6 of 13: Separate logins">
+                    <img src="assets/plebbium/separate-logins.webp" alt="A workspace menu with Separate logins switched on, and notes on how tabs move between workspaces." width="1800" height="1080" loading="lazy" decoding="async">
+                    <figcaption>
+                        <span class="slide-key">Right-click a workspace</span>
+                        <h3>Separate logins</h3>
+                        <p>Give a workspace its own cookies, sign-ins and site data: your work Google account in Work, your personal one in Home, side by side.</p>
+                    </figcaption>
+                </figure>
+                <figure class="slide" role="group" aria-roledescription="slide" aria-label="7 of 13: Know before you click">
+                    <img src="assets/plebbium/link-preview.webp" alt="A link preview card summarising an article in three bullet points, with buttons to Peek or open it in a new tab." width="1800" height="1080" loading="lazy" decoding="async">
+                    <figcaption>
+                        <span class="slide-key">Hold Alt</span>
+                        <h3>Know before you click</h3>
+                        <p>Hold Alt over a link for three lines on what is behind it, summarised on your computer. The page is fetched without your cookies.</p>
+                    </figcaption>
+                </figure>
+                <figure class="slide" role="group" aria-roledescription="slide" aria-label="8 of 13: Tidy in one word">
+                    <img src="assets/plebbium/tidy.webp" alt="The Tidy proposal: close 3 duplicates, group a Lisbon trip and a PC build, archive 2 tabs not opened in 5 days." width="1800" height="1080" loading="lazy" decoding="async">
+                    <figcaption>
+                        <span class="slide-key">tidy</span>
+                        <h3>Tidy in one word</h3>
+                        <p>Duplicates closed, topics grouped, tabs you left behind archived. Proposed first, applied when you say so, with Undo.</p>
+                    </figcaption>
+                </figure>
+                <figure class="slide" role="group" aria-roledescription="slide" aria-label="9 of 13: Ask your tabs">
+                    <img src="assets/plebbium/ask-your-tabs.webp" alt="An answer about the cheapest flight to Lisbon, citing the three tabs it came from." width="1800" height="1080" loading="lazy" decoding="async">
+                    <figcaption>
+                        <span class="slide-key">?</span>
+                        <h3>Ask your tabs</h3>
+                        <p>Ask a question of every open tab, what you have read and the Archive. The answer says which tab it came from.</p>
+                    </figcaption>
+                </figure>
+                <figure class="slide" role="group" aria-roledescription="slide" aria-label="10 of 13: Pleb AI, on your computer">
+                    <img src="assets/plebbium/pleb-ai.webp" alt="The Pleb AI side panel next to an article, offering to summarise the page or explain a selection." width="1800" height="1080" loading="lazy" decoding="async">
+                    <figcaption>
+                        <span class="slide-key">Alt+Shift+A</span>
+                        <h3>Pleb AI, on your computer</h3>
+                        <p>Summarise a page, explain a selection, ask your reading history. The model runs on your own machine, and it never acts on a page by itself.</p>
+                    </figcaption>
+                </figure>
+                <figure class="slide" role="group" aria-roledescription="slide" aria-label="11 of 13: Tabs that tidy themselves">
+                    <img src="assets/plebbium/calm-tabs.webp" alt="The Archive panel listing tabs closed today, yesterday and earlier, next to the page being read." width="1800" height="1080" loading="lazy" decoding="async">
+                    <figcaption>
+                        <span class="slide-key">Alt+Shift+W</span>
+                        <h3>Tabs that tidy themselves</h3>
+                        <p>A tab you have not looked at falls asleep, then closes into the Archive after 12 hours. Nothing is lost: search it, reopen it with a click.</p>
+                    </figcaption>
+                </figure>
+                <figure class="slide" role="group" aria-roledescription="slide" aria-label="12 of 13: Prices and units, converted">
+                    <img src="assets/plebbium/convert.webp" alt="A shop page with $49.99 selected and a bubble showing about ZAR 913.45, with a Copy button." width="1800" height="1080" loading="lazy" decoding="async">
+                    <figcaption>
+                        <span class="slide-key">Select</span>
+                        <h3>Prices and units, converted</h3>
+                        <p>Select $49.99 or 5 ft 11 in and a bubble converts it to rand or metric, with Copy. The Everything bar does sums too.</p>
+                    </figcaption>
+                </figure>
+                <figure class="slide" role="group" aria-roledescription="slide" aria-label="13 of 13: Always current">
+                    <img src="assets/plebbium/updates.webp" alt="The Pleb menu announcing a new Plebbium installed in the background, with a Relaunch now button." width="1800" height="1080" loading="lazy" decoding="async">
+                    <figcaption>
+                        <span class="slide-key">Automatic</span>
+                        <h3>Always current</h3>
+                        <p>Chrome&#x27;s security fixes and new Pleb features arrive by themselves, installed in the background and signed with Plebbium&#x27;s key. Nothing older is ever installed.</p>
+                    </figcaption>
+                </figure>
+            </div>
+
+            <div class="wrap">
+                <div class="gallery-controls">
+                    <button class="icon-btn" id="galleryPrev" type="button" aria-label="Previous feature">
+                        <svg class="i" aria-hidden="true"><use href="#i-chevron-left"></use></svg>
+                    </button>
+                    <span class="gallery-count" id="galleryCount" aria-hidden="true">01 / 13</span>
+                    <span class="gallery-bar" aria-hidden="true"><i id="galleryBar"></i></span>
+                    <button class="icon-btn" id="galleryNext" type="button" aria-label="Next feature">
+                        <svg class="i" aria-hidden="true"><use href="#i-chevron-right"></use></svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================= Install ========================= -->
+        <section id="install">
+            <div class="wrap">
+                <div class="section-head reveal">
+                    <span class="eyebrow">Get it</span>
+                    <h2>Three minutes, <span class="muted">start to default.</span></h2>
+                    <p>
+                        The same installer for every computer, mine included. It installs
+                        into your own user folder and is uninstalled from Windows Settings like
+                        anything else.
+                    </p>
+                </div>
+
+                <ol class="steps reveal">
+                    <li>
+                        <div>
+                            <b>Download and run Plebbium-Setup.exe.</b>
+                            <p>
+                                Windows SmartScreen asks once, because the installer is not
+                                code-signed yet: <b>More info</b>, then <b>Run anyway</b>.
+                                Plebbium installs and starts.
+                            </p>
+                            <a href="https://updates.plebbian.com/download/Plebbium-Setup.exe" class="btn btn-primary">
+                                <svg class="i" aria-hidden="true"><use href="#i-download"></use></svg>
+                                Plebbium-Setup.exe
+                            </a>
+                        </div>
+                    </li>
+                    <li>
+                        <div>
+                            <b>Bring your things, make it the default.</b>
+                            <p>
+                                Chromium's own import brings bookmarks, passwords and history
+                                over from Chrome, Edge or Firefox. Then press
+                                <b>Ctrl+Shift+A</b>, type <b>default</b> and press Enter:
+                                Windows opens on Plebbium's page, where you choose
+                                <b>Set default</b>.
+                            </p>
+                        </div>
+                    </li>
+                    <li>
+                        <div>
+                            <b>Optional: Pleb AI.</b>
+                            <p>
+                                For Pleb AI, link previews, Tidy and asking your tabs, unzip
+                                Pleb-AI.zip and run <b>Set up Pleb AI.cmd</b>. It needs Python,
+                                and offers to install Ollama and the models it uses (about
+                                5 GB). Everything stays on your computer.
+                            </p>
+                            <a href="https://updates.plebbian.com/download/Pleb-AI.zip" class="btn btn-ghost">
+                                <svg class="i" aria-hidden="true"><use href="#i-download"></use></svg>
+                                Pleb-AI.zip
+                            </a>
+                        </div>
+                    </li>
+                    <li>
+                        <div>
+                            <b>That is it: it updates itself.</b>
+                            <p>
+                                A few times a day Plebbium checks for a new version, installs it
+                                in the background and uses it the next time you start it. In
+                                Plebbium settings, under Updates, you can choose Stable or
+                                Beta, or check right away.
+                            </p>
+                        </div>
+                    </li>
+                </ol>
+            </div>
+        </section>
+
+        <!-- ========================= Build ========================= -->
+        <section id="build">
+            <div class="wrap">
+                <div class="section-head reveal">
+                    <span class="eyebrow">How it is made</span>
+                    <h2>A fork, <span class="muted">not a skin.</span></h2>
+                    <p>
+                        Plebbium is Chromium compiled from source. Ten patches add what an
+                        extension cannot reach — the centred Everything bar, workspaces with
+                        their own logins, the signed updater — and Pleb's features ship
+                        inside it as a built-in extension that loads with the browser. Every
+                        feature is tested in the real, built browser.
+                    </p>
+                </div>
+
+                <div class="feature-metrics reveal">
+                    <div><b>156</b><span>Chromium version</span></div>
+                    <div><b>10</b><span>Patches on Chromium</span></div>
+                    <div><b>13</b><span>Features</span></div>
+                    <div><b>200+</b><span>Automated tests</span></div>
+                </div>
+
+                <div class="tag-row reveal">
+                    <span class="tag">Chromium</span>
+                    <span class="tag">C++</span>
+                    <span class="tag">JavaScript</span>
+                    <span class="tag">Python</span>
+                    <span class="tag">Ollama</span>
+                    <span class="tag">PowerShell</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================= End ========================= -->
+        <section id="end">
+            <div class="wrap">
+                <div class="closing reveal">
+                    <span class="stamp">
+                        <svg class="i" aria-hidden="true"><use href="#i-shield"></use></svg>
+                        Updates are signed · source is private
+                    </span>
+                    <p style="margin-top: 22px">
+                        Plebbium only installs updates signed with its own key, and never an
+                        older version than the one you run. The downloads live on GitHub,
+                        reached through updates.plebbian.com.
+                    </p>
+                    <div class="hero-actions closing-actions">
+                        <a href="https://updates.plebbian.com/download/Plebbium-Setup.exe" class="btn btn-primary">
+                            <svg class="i" aria-hidden="true"><use href="#i-download"></use></svg>
+                            Download Plebbium
+                        </a>
+                        <a href="portfolio.html#projects" class="btn btn-ghost">
+                            Back to the projects
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>© <span id="year">2026</span> Plebbian. All rights reserved.</p>
+        <p>Made with Pleb AI · <a href="index.html">Back home</a></p>
+        <p class="footer-note">
+            Built on <code>main</code> · shipped from <code>live-website</code> via pull request ·
+            <a href="https://github.com/Trainer-Han/plebbian.com" target="_blank" rel="noopener noreferrer">source</a>
+        </p>
+    </footer>
+
+    <script>
+        /* The feature gallery: a native scroll-snap track, so touch, trackpad and
+           the scrollbar all just work. This adds the arrows, the counter, the
+           chips, arrow keys, and dragging with a mouse. */
+        (function () {
+            var track = document.getElementById('gallery');
+            if (!track) return;
+            var slides = Array.prototype.slice.call(track.querySelectorAll('.slide'));
+            var chips = Array.prototype.slice.call(document.querySelectorAll('.feature-chip'));
+            var row = document.querySelector('.feature-chips');
+            var prev = document.getElementById('galleryPrev');
+            var next = document.getElementById('galleryNext');
+            var count = document.getElementById('galleryCount');
+            var bar = document.getElementById('galleryBar');
+            var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+
+            function current() {
+                var start = track.scrollLeft;
+                var lead = parseFloat(getComputedStyle(track).scrollPaddingLeft) || 0;
+                var best = 0;
+                var dist = Infinity;
+                slides.forEach(function (s, i) {
+                    var d = Math.abs(s.offsetLeft - lead - start);
+                    if (d < dist) { dist = d; best = i; }
+                });
+                if (start + track.clientWidth >= track.scrollWidth - 2) best = slides.length - 1;
+                return best;
+            }
+
+            function go(i) {
+                i = Math.max(0, Math.min(slides.length - 1, i));
+                var lead = parseFloat(getComputedStyle(track).scrollPaddingLeft) || 0;
+                track.scrollTo({ left: slides[i].offsetLeft - lead, behavior: reduce ? 'auto' : 'smooth' });
+            }
+
+            function update() {
+                var i = current();
+                count.textContent = pad(i + 1) + ' / ' + pad(slides.length);
+                bar.style.width = ((i + 1) / slides.length * 100) + '%';
+                prev.disabled = i === 0;
+                next.disabled = i === slides.length - 1;
+                slides.forEach(function (s, j) { s.setAttribute('aria-current', j === i ? 'true' : 'false'); });
+                chips.forEach(function (c, j) { c.setAttribute('aria-current', j === i ? 'true' : 'false'); });
+                // On a phone the chips are one scrolling row: keep the current
+                // one in it. Only the row moves, never the page.
+                var item = chips[i] && chips[i].parentNode;
+                if (item && row.scrollWidth > row.clientWidth) {
+                    row.scrollTo({ left: item.offsetLeft - (row.clientWidth - item.offsetWidth) / 2, behavior: reduce ? 'auto' : 'smooth' });
+                }
+            }
+
+            var queued = false;
+            track.addEventListener('scroll', function () {
+                if (queued) return;
+                queued = true;
+                requestAnimationFrame(function () { queued = false; update(); });
+            }, { passive: true });
+            window.addEventListener('resize', update);
+
+            prev.addEventListener('click', function () { go(current() - 1); });
+            next.addEventListener('click', function () { go(current() + 1); });
+            chips.forEach(function (c) {
+                c.addEventListener('click', function () { go(Number(c.getAttribute('data-go'))); });
+            });
+            track.addEventListener('keydown', function (e) {
+                var to = { ArrowRight: current() + 1, ArrowLeft: current() - 1, Home: 0, End: slides.length - 1 }[e.key];
+                if (to === undefined) return;
+                e.preventDefault();
+                go(to);
+            });
+
+            // A mouse drags the track; touch and trackpads scroll it natively.
+            var drag = null;
+            track.addEventListener('pointerdown', function (e) {
+                if (e.pointerType !== 'mouse' || e.button !== 0) return;
+                drag = { x: e.clientX, left: track.scrollLeft, moved: false };
+            });
+            window.addEventListener('pointermove', function (e) {
+                if (!drag) return;
+                var dx = e.clientX - drag.x;
+                if (!drag.moved && Math.abs(dx) < 6) return;
+                drag.moved = true;
+                track.classList.add('dragging');
+                track.scrollLeft = drag.left - dx;
+            });
+            window.addEventListener('pointerup', function () {
+                if (!drag) return;
+                var moved = drag.moved;
+                drag = null;
+                track.classList.remove('dragging');
+                if (moved) go(current());
+            });
+
+            update();
+        }());
+    </script>
+    <script src="assets/app.js" defer></script>
+</body>
+</html>
