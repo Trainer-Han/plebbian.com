@@ -343,6 +343,36 @@
        data. They sort ahead of the fetched repos. */
     var MANUAL_PROJECTS = [
         {
+            // The cover is the browser itself on a fresh start, not one of the
+            // feature boards: those live on plebbium.html, labelled as designs.
+            name: 'Plebbium',
+            description: 'A Chromium browser for Windows with Pleb\'s features built in — ' +
+                'one bar for everything, workspaces with their own logins, a blocker, ' +
+                'tabs that tidy themselves, and AI that runs on your own computer.',
+            language: 'C++',
+            homepage: 'plebbium.html',
+            homepageLabel: 'See what it does',
+            manual: true,
+            cover: 'assets/plebbium-cover.webp',
+            note: 'Free download',
+            badge: 'Daily driver',
+            modalDesc: 'Chromium compiled from source with ten patches, and Pleb\'s ' +
+                'features shipped inside it as a built-in extension. The Everything ' +
+                'bar (Ctrl+Shift+A) reaches commands, tabs, bookmarks, history and ' +
+                'ChatGPT or Claude; workspaces switch sets of tabs without reloading ' +
+                'and can keep their own logins; a blocker built on Chromium\'s own ' +
+                'engine removes ads and trackers; idle tabs sleep and close into an ' +
+                'Archive. Pleb AI summarises pages and links and answers questions ' +
+                'about your tabs on the computer itself. It updates itself, installing ' +
+                'only what is signed with its own key.',
+            facts: [
+                { label: 'Platform', value: 'Windows 10 and 11' },
+                { label: 'Built on', value: 'Chromium 156' },
+                { label: 'Stack', value: 'C++ · JavaScript · Python' },
+                { label: 'Source', value: 'Private' }
+            ]
+        },
+        {
             name: 'syntaxx.lol',
             description: 'Discord bot for community servers — moderation and automod, ' +
                 'levelling and economy, private join-to-create voice channels, ' +
@@ -470,8 +500,10 @@
     /* Public repos a manual entry above already speaks for.
        github.com/Trainer-Han/BimmerLink holds screenshots and video captures of
        the bot, not the bot — left in the fetched list it would sit beside the
-       real entry as a second card with the same name and a thinner story. */
-    var SUPERSEDED_REPOS = ['BimmerLink'];
+       real entry as a second card with the same name and a thinner story.
+       github.com/Trainer-Han/plebbium-updates holds Plebbium's downloads and
+       signed update files, not its source: the Plebbium entry speaks for it. */
+    var SUPERSEDED_REPOS = ['BimmerLink', 'plebbium-updates'];
 
     /* Public repos that are not projects.
        github.com/Trainer-Han/Trainer-Han is the profile README — GitHub renders
